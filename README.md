@@ -45,6 +45,7 @@
 
 <p align="center">
   <img src="./images/bangjwo_api_statement.JPG" alt="API Statement" width="600"/>
+  <img src="https://github.com/InJun2/Bangjwo/blob/main/images/swagger.png" alt="API Statement" width="600"/>
 </p>
 
 ## ✨ 주요 기능
