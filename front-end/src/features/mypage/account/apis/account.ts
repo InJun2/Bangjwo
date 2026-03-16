@@ -7,10 +7,6 @@ export const fetchMyProfile = async (): Promise<MemberResponseDto> => {
 };
 
 export const patchMyProfile = async (formData: FormData) => {
-  const res = await axiosInstance.patch("/api/v1/member/me", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const res = await axiosInstance.patch("/api/v1/member/me", formData);
   return res.data;
 };

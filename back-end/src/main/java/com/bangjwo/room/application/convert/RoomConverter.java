@@ -87,6 +87,7 @@ public class RoomConverter {
 		return SearchDetailRoomResponseDto.builder()
 			.roomId(room.getRoomId())
 			.memberId(room.getMemberId())
+			.profileUrl(member.getProfileUrl())
 			.isLiked(isLiked)
 			.roomStatus(room.getStatus())
 			.buildingType(room.getBuildingType())

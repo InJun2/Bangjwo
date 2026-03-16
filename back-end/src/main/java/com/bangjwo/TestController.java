@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 public class TestController {
 	@GetMapping
 	public String test() {
-		return "bangjwo-service";
+		return "bangjwo-service (테스트)";
 	}
 
 	@Operation(summary = "테스트 컨트롤러", security = @SecurityRequirement(name = "JWT"))

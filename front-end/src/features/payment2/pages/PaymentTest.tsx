@@ -61,7 +61,7 @@ const PaymentTest: React.FC = () => {
 
       // 아임포트 결제 요청
       if (impScriptLoaded && window.IMP) {
-        window.IMP.init("imp17722128");
+        window.IMP.init(import.meta.env.VITE_IMP_ID);
         const { merchant_uid, amount, product_name } = data;
         window.IMP.request_pay(
           {

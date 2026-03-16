@@ -19,5 +19,4 @@ public class PaymentConfig {
 		return new IamportClient(apiKey, secretKey);
 	}
 
-
 }

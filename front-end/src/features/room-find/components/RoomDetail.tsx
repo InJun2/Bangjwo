@@ -23,6 +23,7 @@ import {
   RoomOption,
   MaintenanceIncludeName,
 } from "../../../types/roomTypes";
+import RoomLocationMap from "../components/RoomLocationMap";
 import ModalPhoneCheck from "../../modal/pages/ModalPhoneCheck";
 import RoundedImage from "../../../components/RoundedImage";
 import MaterialIcon from "../../../components/MaterialIcon";
@@ -544,8 +545,9 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
 
                   <div className="flex flex-wrap items-center gap-3">
                     <RoundedImage
-                      src="https://images.pexels.com/photos/207272/pexels-photo-207272.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+                      src={room.profileUrl}
                       alt="profile image"
+                      size="3rem"
                     />
                     <div className="flex gap-1">
                       <span>작성자</span>
@@ -705,7 +707,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                     }}
                     scrollMarginTop={48 + tabMenuHeight}
                   >
-                    <div className="w-full h-[160px] bg-neutral-gray"></div>
+                    <RoomLocationMap address={room.address} />
                     <div className="font-medium">{room.address}</div>
                   </TabContent>
 

@@ -16,7 +16,7 @@ export const runIdentityVerification = async ({
   contractId,
   roomId,
   role,
-  redirectUrl = `${import.meta.env.VITE_APP_BASE_URL}`,
+  redirectUrl = window.location.href,
   onSuccess,
   onFailure,
 }: VerifyParams) => {

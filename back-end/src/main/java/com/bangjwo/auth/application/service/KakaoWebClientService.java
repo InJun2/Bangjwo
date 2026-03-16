@@ -44,10 +44,6 @@ public class KakaoWebClientService {
 			formData.add("redirect_uri", kakaoConfig.getRedirectUri());
 			formData.add("code", authCode);
 
-			log.warn("authCode : {}", authCode);
-			log.warn("client_id : {}", kakaoConfig.getClientId());
-			log.warn("redirect_uri : {}", kakaoConfig.getRedirectUri());
-
 			Map<String, Object> tokenMap = webClient.post()
 				.uri(KAKAO_OAUTH_URL)
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)

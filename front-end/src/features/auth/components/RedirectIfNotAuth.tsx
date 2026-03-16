@@ -36,7 +36,6 @@ const RedirectIfNotAuth = ({
           if (profile.isAuth) {
             setIsAuth(true);
             setLoading(false);
-          } else {
           }
         } catch (err) {
           openModal("alert");

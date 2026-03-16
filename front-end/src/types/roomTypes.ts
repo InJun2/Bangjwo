@@ -129,6 +129,7 @@ export type RoomDirection =
 export interface RoomDetailResponse {
   roomId: number;
   memberId: number;
+  profileUrl?: string | null;
   isLiked: boolean;
   roomStatus: string;
   buildingType: string;

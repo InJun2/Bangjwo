@@ -86,41 +86,44 @@ export interface PaymentRequestParams {
  * @param params - PaymentRequestParams 객체
  * @param callback - 결제 완료 후 호출될 콜백 함수
  */
+// src/apis/paymentAPI.ts
 export const requestIamportPayment = async (
-  params: PaymentRequestParams,
-//   callback: (response: any) => void
-): Promise<void> => {
-  try {
-    // 스크립트 로드 (이미 로드되어 있으면 바로 resolve됨)
-    await loadIamportScript();
-    
-    // window.IMP가 아임포트 SDK 객체
-    if (window.IMP) {
-      // 아임포트 초기화 (가맹점 코드 전달)
-      window.IMP.init("imp17722128");
-      
-      // 결제 요청 (필요한 값만 전달)
-      window.IMP.request_pay(
-        {
-          pg: "html5_inicis",
-          pay_method: "card",
-          merchant_uid: params.merchant_uid,
-          name: params.name,
-          amount: params.amount,
-          buyer_email: params.buyer_email,
-          buyer_name: params.buyer_name,
-          buyer_tel: params.buyer_tel,
-          buyer_addr: params.buyer_addr,
-          buyer_postcode: params.buyer_postcode,
-        },
-        // callback
-      );
-    } else {
-      throw new Error("아임포트 객체 초기화 실패");
+  params: PaymentRequestParams
+): Promise<any> => {
+  await loadIamportScript();
+
+  return new Promise((resolve, reject) => {
+    if (!window.IMP) {
+      return reject(new Error("아임포트 객체 초기화 실패"));
     }
-  } catch (error) {
-    throw error;
-  }
+
+    window.IMP.init(import.meta.env.VITE_IMP_ID);
+
+    window.IMP.request_pay(
+      {
+        pg: "html5_inicis", // V1 채널에 맞춘 PG사
+        pay_method: "card",
+        merchant_uid: params.merchant_uid,
+        name: params.name,
+        amount: params.amount,
+        buyer_email: params.buyer_email,
+        buyer_name: params.buyer_name,
+        buyer_tel: params.buyer_tel,
+        buyer_addr: params.buyer_addr,
+        buyer_postcode: params.buyer_postcode,
+        // 🚨 모바일 결제 완료 후 돌아올 프론트엔드 URL (도메인에 맞게 수정 필요)
+        m_redirect_url: `${window.location.origin}/payment/result` 
+      },
+      (response: any) => {
+        // PC 환경 결제 결과 처리
+        if (response.success) {
+          resolve(response); // 성공 시 validatePayment로 넘길 데이터 반환
+        } else {
+          reject(new Error(response.error_msg || "결제에 실패하였습니다."));
+        }
+      }
+    );
+  });
 };
 
 // /**

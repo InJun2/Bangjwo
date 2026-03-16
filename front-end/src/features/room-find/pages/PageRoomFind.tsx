@@ -149,6 +149,8 @@ const PageRoomFind = () => {
           }
         }}
         rooms={data?.items}
+
+        onRoomClick={(roomId) => setSelectedRoomId(roomId)}
       />
     </div>
   );

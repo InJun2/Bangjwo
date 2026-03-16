@@ -5,7 +5,7 @@ services:
     restart: always
     env_file:
       - .env
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --skip-character-set-client-handshake
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_USER: "${MYSQL_USER}"
@@ -35,7 +35,8 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - /home/ubun2/mongodb/data:/data
+      - mongo-volume:/data
+    #      - /home/ubun2/mongodb/data:/data
     environment:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
@@ -87,6 +88,11 @@ services:
   bangjwo:
     build: .
     container_name: bangjwo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file:
       - .env
     depends_on:
@@ -118,36 +124,37 @@ services:
     networks:
       - bangjwo-network
 
-  apm-server:
-    image: docker.elastic.co/apm/apm-server:8.17.4
-    container_name: apm-server
-    env_file:
-      - .env
-    ports:
-      - "8200:8200"
-    networks:
-      - bangjwo-network
-      - elk
-    extra_hosts:
-      - "elasticsearch:192.168.192.2"
-    environment:
-      - APM_SERVER_OUTPUT_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - APM_SERVER_SETUP_KIBANA_HOST=http://kibana:5601
-      - APM_SERVER_HOST=0.0.0.0:8200
-      - ELASTIC_USERNAME=elastic
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - KIBANA_USERNAME=kibana_system
-      - KIBANA_SYSTEM_PASSWORD=${KIBANA_PASSWORD}
-    restart: unless-stopped
+#  apm-server:
+#    image: docker.elastic.co/apm/apm-server:8.17.4
+#    container_name: apm-server
+#    env_file:
+#      - .env
+#    ports:
+#      - "8200:8200"
+#    networks:
+#      - bangjwo-network
+#      - elk
+#    extra_hosts:
+#      - "elasticsearch:192.168.192.2"
+#    environment:
+#      - APM_SERVER_OUTPUT_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#      - APM_SERVER_SETUP_KIBANA_HOST=http://kibana:5601
+#      - APM_SERVER_HOST=0.0.0.0:8200
+#      - ELASTIC_USERNAME=elastic
+#      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#      - KIBANA_USERNAME=kibana_system
+#      - KIBANA_SYSTEM_PASSWORD=${KIBANA_PASSWORD}
+#    restart: unless-stopped
 
 
 volumes:
   db-volume:
+  mongo-volume:
 
 networks:
   bangjwo-network:
     driver: bridge
 
-  elk:
-    external: true
-    name: docker-elk_elk
+#  elk:
+#    external: true
+#    name: docker-elk_elk

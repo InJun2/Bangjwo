@@ -17,11 +17,10 @@ import com.bangjwo.portone.domain.repository.PaymentRepository;
 import com.bangjwo.register.application.dto.request.RegistryRequestDto;
 import com.bangjwo.room.application.service.RoomService;
 import com.bangjwo.room.domain.vo.RoomStatus;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.siot.IamportRestClient.IamportClient;
 import com.siot.IamportRestClient.exception.IamportResponseException;
 import com.siot.IamportRestClient.request.PrepareData;
-import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.Payment;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,7 @@ public class PaymentServiceImpl implements PaymentService {
 	private final RegistryCommandService registryCommandService;
 	private final IamportClient iamportClient;
 	private final RoomService roomService;
+	private final PortoneWebClientService portoneWebClientService;
 
 	@Override
 	@Transactional
@@ -66,41 +66,40 @@ public class PaymentServiceImpl implements PaymentService {
 	@Transactional
 	public Long validateIamport(String impUid) {
 		try {
-			IamportResponse<Payment> payment = iamportClient.paymentByImpUid(impUid);
+			JsonNode paymentResponse = portoneWebClientService.getPaymentDetail(impUid);
 
-			if (payment == null || payment.getResponse() == null) {
-				throw new BusinessException(PortoneErrorCode.IMP_UID_NOT_FOUND);
-			}
+			String merchantUid = paymentResponse.path("merchant_uid").asText();
+			String status = paymentResponse.path("status").asText();
+			String responseImpUid = paymentResponse.path("imp_uid").asText();
 
-			String merchantUid = payment.getResponse().getMerchantUid();
 			Payments result = paymentRepository.findByMerchantUid(merchantUid)
 				.orElseThrow(() -> new BusinessException(PortoneErrorCode.IMP_UID_NOT_FOUND));
 
-			if (!"paid".equals(payment.getResponse().getStatus())) {
+			if (!"paid".equals(status)) {
 				result.changeStatus(PaymentStatus.FAILED);
 				throw new BusinessException(PortoneErrorCode.PAYMENT_FAILED);
 			}
 
-			result.setImpUid(payment.getResponse().getImpUid());
+			result.setImpUid(responseImpUid);
 			result.changeStatus(PaymentStatus.PAID);
 
-			// ✅ 더미 PDF/JSON 파일 설정
+			// // ✅ 더미 PDF/JSON 파일 설정
 			Long roomId = result.getRoomId();
-			String pdfKey = roomId % 2 == 0 ? "registry.pdf" : "registry2.pdf";
-			String jsonKey = roomId % 2 == 0 ? "hyphen.json" : "hyphen2.json";
-			result.setPdfUrl(pdfKey);
-			result.setJsonUrl(jsonKey);
-
-			// ✅ 등기부 자동 저장 호출
-			registryCommandService.parseAndSave(
-				RegistryRequestDto.builder()
-					.paymentId(result.getPaymentId().toString())
-					.roomId(result.getRoomId())
-					.jsonUrl(result.getJsonUrl())
-					.pdfUrl(result.getPdfUrl())
-					.build(),
-				result.getMemberId()
-			);
+			// String pdfKey = roomId % 2 == 0 ? "registry.pdf" : "registry2.pdf";
+			// String jsonKey = roomId % 2 == 0 ? "hyphen.json" : "hyphen2.json";
+			// result.setPdfUrl(pdfKey);
+			// result.setJsonUrl(jsonKey);
+			//
+			// // ✅ 등기부 자동 저장 호출
+			// registryCommandService.parseAndSave(
+			// 	RegistryRequestDto.builder()
+			// 		.paymentId(result.getPaymentId().toString())
+			// 		.roomId(result.getRoomId())
+			// 		.jsonUrl(result.getJsonUrl())
+			// 		.pdfUrl(result.getPdfUrl())
+			// 		.build(),
+			// 	result.getMemberId()
+			// );
 
 			var room = roomService.findRoom(roomId);
 
@@ -108,10 +107,8 @@ public class PaymentServiceImpl implements PaymentService {
 				room.updateRegistryPaid();
 			}
 
-			log.info("결제 성공 및 등기부 등록 완료 - impUid: {}", result.getImpUid());
 			return result.getPaymentId();
-		} catch (IamportResponseException e) {
-			log.error("Iamport 응답 예외", e);
+		} catch (BusinessException e) {
 			throw new BusinessException(PortoneErrorCode.IMP_PAYMENT_VERIFICATION_FAILED);
 		} catch (Exception e) {
 			log.error("결제 검증 중 예외", e);

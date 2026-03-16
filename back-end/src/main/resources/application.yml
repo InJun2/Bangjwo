@@ -1,5 +1,10 @@
-spring:
+server:
+  tomcat:
+    accesslog:
+      enabled: true
+      pattern: "%h %l %u %t \"%r\" %s %b"
 
+spring:
   config:
     import: optional:file:.env[.properties]
 
@@ -19,6 +24,7 @@ spring:
   sql:
     init:
       mode: always
+      encoding: UTF-8
       schema-locations: classpath:schema.sql
       data-locations: classpath:data.sql
 
@@ -48,7 +54,7 @@ spring:
 registration:
   kakao:
     client-id: ${KAKAO_REST_API_KEY}
-    redirect-uri: https://j12a404.p.ssafy.io/auth/kakao/callback
+    redirect-uri: http://localhost:5173/auth/kakao/callback
     authorization-grant-type: authorization_code
     scope: profile_nickname, profile_image, account_email
     client-name: kakao
@@ -61,7 +67,8 @@ provider:
 
 token:
   access_expiration_time: 43200000
-  refresh_expiration_time: 2592000000
+  #  refresh_expiration_time: 2592000000
+  refresh_expiration_time: 0
   secret: ${JWT_SECRET_KEY}
 
 aws:
@@ -70,7 +77,7 @@ aws:
   secret:
     key: ${AWS_SECRET_KEY}
   s3:
-    bucket: "bangjwo-s3"
+    bucket: "bangjwo-service-s3"
   region: "ap-northeast-2"
 
 imp:
@@ -80,4 +87,8 @@ imp:
     pay: ${PORTONE_PAYMENT_API_SECRET}
     verificate: ${PORTONE_API_SECRET}
 
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus

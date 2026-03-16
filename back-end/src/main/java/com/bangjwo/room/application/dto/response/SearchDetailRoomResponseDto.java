@@ -45,6 +45,9 @@ public class SearchDetailRoomResponseDto {
 	)
 	private RoomBuildingType buildingType;
 
+	@Schema(description = "매물 등록자 Image", nullable = true)
+	private String profileUrl;
+
 	@Schema(description = "부동산 고유 번호", example = "1146-1996-006588")
 	private String realEstateId;
 

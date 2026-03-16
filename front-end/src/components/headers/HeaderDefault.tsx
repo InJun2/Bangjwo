@@ -135,7 +135,7 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
                 ) : (
                   <li>
                     <Button size="small" onClick={() => navigate("/login")}>
-                      로그인 및 회원가입
+                      로그인
                     </Button>
                   </li>
                 )}
@@ -230,7 +230,7 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    로그인 및 회원가입
+                    로그인
                   </Button>
                 </li>
               )}

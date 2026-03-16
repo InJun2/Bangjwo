@@ -49,10 +49,10 @@ public class PaymentController {
 	public ResponseEntity<Map<String, Object>> prepareOrder(
 		@RequestBody PaymentDto.RequestDto dto) {    // 매물 + 회원 ID
 		String merchantUid = "ORD" + System.currentTimeMillis();
-		int amount = 1000;
+		int amount = 10;
 
 		paymentService.registerPaymentPrepare(merchantUid, amount);
-		paymentService.prePayment(dto, merchantUid);    // dto를 받아오는데 저장을 안하고 있음
+		paymentService.prePayment(dto, merchantUid);
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("merchant_uid", merchantUid);
@@ -64,7 +64,7 @@ public class PaymentController {
 
 	@Operation(
 		summary = "결제 검증",
-		description = "포트원에 결제 내역을 검증을 요청하고 결제 내역을 DB에 저장합니다. 이후, ",
+		description = "포트원에 결제 내역을 검증을 요청하고 결제 내역을 DB에 저장합니다.",
 		security = @SecurityRequirement(name = "JWT"),
 		responses = {
 			@ApiResponse(responseCode = "200", description = "결제 검증 성공"),
@@ -73,7 +73,7 @@ public class PaymentController {
 		}
 	)
 	@PostMapping("/validation/{impUid}")
-	public ResponseEntity<Long> validateIamport(
+	public ResponseEntity<Long> validateIamPort(
 		@PathVariable String impUid) {
 		var paymentId = paymentService.validateIamport(impUid);
 
