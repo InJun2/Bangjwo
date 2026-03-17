@@ -39,3 +39,12 @@ out/
 
 *.xml
 *.jar
+
+# IntelliJ
+.idea/
+*.iml
+
+# IntelliJ local config
+.idea/workspace.xml
+.idea/**/dataSources*
+.idea/**/dataSources.local.xml
