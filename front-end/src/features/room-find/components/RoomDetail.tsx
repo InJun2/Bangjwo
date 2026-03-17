@@ -559,7 +559,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                   <div className="divider" />
 
                   <div className="text-neutral-dark100 flex flex-wrap gap-1">
-                    <span>{formatDate(room.createDate)}</span>
+                    <span>{formatDate(room.createDate)} 생성 </span>
                     <span>·</span>
                     <span>{formatDate(room.updateDate)} 수정</span>
                   </div>
@@ -655,7 +655,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                     />
                     <ListItemLine
                       title="위치"
-                      content={`${room.floor}층 (총 ${room.maxFloor}층)`}
+                      content={`${room.floor} (총 ${room.maxFloor}층)`}
                     />
                     <ListItemLine
                       title="방향"
