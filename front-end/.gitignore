@@ -15,15 +15,26 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.idea/
 
 # Environment variable files
 .env
 .env.development
 .env.production
+
+# build cache
+.cache/
+.next/
+out/
+
+# OS
+Thumbs.db
+
+# coverage
+coverage/
