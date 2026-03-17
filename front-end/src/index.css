@@ -31,6 +31,14 @@
   --color-kakao-label: rgba(0, 0, 0, 0.85);
 }
 
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-modify: read-only;
+}
+
 /*custom class*/
 .shadow-custom {
   @apply shadow-[0_0_12px_0_rgba(0,0,0,0.25)];
@@ -177,4 +185,12 @@ h1 {
 .custom-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--color-neutral-gray) var(--color-neutral-light200);
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  cursor: text;
 }
