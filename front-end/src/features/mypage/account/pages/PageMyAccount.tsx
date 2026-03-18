@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/buttons/Button";
 import LineBox from "../../../../components/LineBox";
 import { useAuth } from "../../../../contexts/AuthContext";
@@ -13,7 +14,7 @@ import { runIdentityVerification } from "../../../verify/utils/verify";
 const PageAccount = () => {
   const { accessToken, logout } = useAuth();
   const { isOpen, openModal, closeModal } = useModal();
-
+  const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [isAuth, setIsAuth] = useState(false);
@@ -98,7 +99,16 @@ const PageAccount = () => {
         </div>
       </LineBox>
       <LineBox addClassName="w-full">
-        <button onClick={logout} className="cursor-pointer">
+        <button 
+          onClick={() => {
+            setToastMessage("로그아웃 중입니다."); 
+            
+            setTimeout(() => {
+              logout();
+            }, 1500);
+          }} 
+          className="cursor-pointer"
+        >
           로그아웃하기
         </button>
       </LineBox>

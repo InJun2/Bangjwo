@@ -46,6 +46,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setAccessToken(null);
     setUser(null);
     setStatus("unauthenticated");
+
+    window.location.replace("/");
   };
 
   return (
