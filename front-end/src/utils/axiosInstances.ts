@@ -37,8 +37,10 @@ const responseHandler = (res: AxiosResponse) => {
 const responseErrorHandler = (err: AxiosError) => {
   if (err.response) {
     switch (err.response.status) {
+      case StatusCodes.UNAUTHORIZED:
+        window.dispatchEvent(new CustomEvent("tokenExpired"));
+        break;
       case StatusCodes.NOT_FOUND:
-        //404 Not Found
         console.error("에러: Not Found");
         break;
       default:
@@ -50,7 +52,7 @@ const responseErrorHandler = (err: AxiosError) => {
   } else {
     console.error("요청 설정 중 오류가 발생했습니다.", err.message);
   }
-  return Promise.reject(err); //에러를 호출한 곳으로 전달함
+  return Promise.reject(err);
 };
 
 axiosInstance.interceptors.request.use(requestHandler, requestErrorHandler);
