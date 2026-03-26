@@ -11,10 +11,19 @@ const MessageInputBox = ({ onSend, onAttachClick }: Props) => {
 
   const handleSend = () => {
     if (message.trim()) {
-      onSend(
-        message.trim()
-      );
+      onSend(message.trim());
       setMessage("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSend();
     }
   };
 
@@ -37,7 +46,7 @@ const MessageInputBox = ({ onSend, onAttachClick }: Props) => {
         className="flex-1 bg-white rounded-full px-4 py-2 text-sm text-neutral-dark100 placeholder:text-neutral-gray outline-none border border-neutral-light200"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+        onKeyDown={handleKeyDown}
       />
 
       {/* 전송 아이콘 버튼 */}

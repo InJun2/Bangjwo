@@ -15,7 +15,12 @@ const ChatbotInput = ({ onSend }: ChatbotInputProps) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+
     if (e.key === "Enter") {
+      e.preventDefault();
       handleSend();
     }
   };
