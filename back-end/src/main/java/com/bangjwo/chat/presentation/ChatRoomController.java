@@ -1,5 +1,6 @@
 package com.bangjwo.chat.presentation;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -201,7 +202,14 @@ public class ChatRoomController {
 			} catch (JsonProcessingException e) {
 				throw new BusinessException(ChatErrorCode.CHAT_REDIS_SERIALIZATION_FAILED);
 			}
-		}).collect(Collectors.toList());
+		}).collect(Collectors.toMap(
+				ChatRoomSummary::getChatRoomId,
+				summary -> summary,
+				(existing, replacement) -> existing,
+				LinkedHashMap::new
+			))
+			.values().stream()
+			.collect(Collectors.toList());
 
 		return ResponseEntity.ok(summaries);
 	}
