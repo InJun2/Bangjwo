@@ -40,3 +40,6 @@ out/
 
 .xml
 .idea
+
+**/.gradle/
+**/build/
