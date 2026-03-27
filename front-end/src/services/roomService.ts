@@ -4,6 +4,7 @@ import {
   postRoom,
   fetchMyRooms,
   patchRoom,
+  deleteRoom,
 } from "../apis/room";
 import {
   RoomResponse,
@@ -61,5 +62,15 @@ export const getMyRooms = async (page: number = 0, size: number = 15) => {
   } catch (error) {
     console.error("Error fetching my rooms:", error);
     throw error;
+  }
+};
+
+export const deleteRoomApi = async (roomId: number) => {
+  try {
+    const result = await deleteRoom(roomId);
+    return result;
+  } catch (err) {
+    console.error("Error deleting room:", err);
+    throw err;
   }
 };
