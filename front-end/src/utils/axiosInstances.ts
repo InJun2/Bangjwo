@@ -15,7 +15,7 @@ const axiosInstance = axios.create({
 const requestHandler = (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem("accessToken");
   // const test = import.meta.env.VITE_ACCESS_TOKEN;
-  console.log("token", token);
+  // console.log("token", token);
   const isHeaderSettable =
     config.headers && typeof config.headers.set === "function";
 
