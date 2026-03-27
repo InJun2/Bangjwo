@@ -3,6 +3,8 @@ package com.bangjwo.room.domain.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import org.hibernate.annotations.SQLRestriction;
+
 import com.bangjwo.global.common.entity.BaseEntity;
 import com.bangjwo.room.application.dto.request.UpdateRoomRequestDto;
 import com.bangjwo.room.domain.vo.RoomBuildingType;
@@ -29,6 +31,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
+@SQLRestriction("deleted_at IS NULL")
 @Table(indexes = {
 	@Index(name = "idx_member_id", columnList = "memberId"),
 	@Index(name = "idx_status", columnList = "status")
