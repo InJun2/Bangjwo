@@ -41,3 +41,8 @@ export const fetchMyRooms = async (page: number = 0, size: number) => {
   });
   return res.data;
 };
+
+export const deleteRoom = async (roomId: number) => {
+  const res = await axiosInstance.delete(`/api/v1/room/${roomId}`);
+  return res.data;
+};
