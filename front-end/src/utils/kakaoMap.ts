@@ -1,16 +1,24 @@
 export const loadKakaoMapScript = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    if (window.kakao && window.kakao.maps) {
+    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
       return resolve();
+    }
+
+    if (window.kakao && window.kakao.maps) {
+      window.kakao.maps.load(resolve);
+      return;
     }
 
     const isScriptExist = document.querySelector(
       'script[src^="https://dapi.kakao.com/v2/maps/sdk.js"]'
     );
     if (isScriptExist) {
-      isScriptExist.addEventListener("load", () =>
-        window.kakao.maps.load(resolve)
-      );
+      const checkInterval = setInterval(() => {
+        if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
       return;
     }
 

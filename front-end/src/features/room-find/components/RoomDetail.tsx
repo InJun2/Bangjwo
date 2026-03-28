@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, MouseEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { getRoomDetail } from "../../../services/roomService";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getRoomDetail, deleteRoomApi } from "../../../services/roomService";
 import { RoomDetailResponse } from "../../../types/roomTypes";
 import TabMenu from "./TabMenu";
 import Accordion from "../../../components/Accordion";
@@ -43,6 +44,8 @@ interface RoomDetailProps {
 const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
   // 모든 state와 ref를 먼저 선언
   const { accessToken, user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [isHeaderColorChange, setIsHeaderColorChange] = useState(false);
   const [isTitleScrolled, setIsTitleScrolled] = useState(false);
@@ -103,6 +106,35 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
     queryFn: () => getRoomDetail(selectedRoomId!),
     enabled: !!selectedRoomId,
   });
+
+  const handleUpdateClick = () => {
+    // App.tsx에 정의된 수정 페이지 라우트에 맞게 수정해주세요. (예: /room/update/1)
+    navigate(`/room/update/${selectedRoomId}`);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (roomId: number) => deleteRoomApi(roomId),
+    onSuccess: () => {
+      alert("매물이 삭제되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["rooms"] }); // 맵/목록 데이터 새로고침
+      queryClient.invalidateQueries({ queryKey: ["myRooms"] })
+      onClose(); // 상세 패널 닫기
+    },
+    onError: (err) => {
+      console.error("삭제 실패:", err);
+      alert("매물 삭제에 실패했습니다. 권한을 확인해주세요.");
+    },
+  });
+
+  // [삭제] 삭제 버튼 클릭 핸들러
+  const handleDeleteClick = () => {
+    if (window.confirm("정말 이 매물을 삭제하시겠습니까?")) {
+      deleteMutation.mutate(selectedRoomId!);
+    }
+  };
+
+  // 현재 로그인한 유저가 글 작성자인지 확인하는 로직 (타입에 맞춰 형변환 주의)
+  const isOwner = user?.sub && room?.memberId && String(user.sub) === String(room.memberId);
 
   const tabTitles = [
     "기본 정보",
@@ -563,13 +595,14 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                     <span>·</span>
                     <span>{formatDate(room.updateDate)} 수정</span>
                   </div>
+                  
                   <div className="flex flex-wrap gap-1">
-                    <Button size="small" variant="dark">
-                      수정
-                    </Button>
-                    <Button size="small" variant="warning">
-                      삭제
-                    </Button>
+                    {isOwner && (
+                      <>
+                        <Button size="small" variant="dark" onClick={handleUpdateClick}>수정</Button>
+                        <Button size="small" variant="warning" onClick={handleDeleteClick}>삭제</Button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -707,7 +740,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                     }}
                     scrollMarginTop={48 + tabMenuHeight}
                   >
-                    <RoomLocationMap address={room.address} />
+                    <RoomLocationMap address={room.address} lat={room.lat} lng={room.lng} />
                     <div className="font-medium">{room.address}</div>
                   </TabContent>
 

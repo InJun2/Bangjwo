@@ -1,4 +1,5 @@
 import { ChangeEvent, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import TitleBox from "../../../components/TitleBox";
 import InputBasic from "../../../components/InputBasic";
 import InfoText from "../../../components/InfoText";
@@ -39,6 +40,7 @@ type RoomFormType = "create" | "update";
 
 interface RoomFormProps {
   type: RoomFormType;
+  roomId?: number | null;
   initialData?: Partial<
     CreateRoomRequestDto & UpdateRoomRequestDto & { id?: string }
   >;
@@ -53,10 +55,11 @@ interface RoomFormProps {
 const FORM_KEY = "roomFormData";
 const EXTRA_KEY = "roomExtraFields";
 
-const RoomForm = ({ type, initialData, onSubmit }: RoomFormProps) => {
+const RoomForm = ({ type, roomId, initialData, onSubmit }: RoomFormProps) => {
   const navigate = useNavigate();
-  const params = useParams();
-  const roomId = params.roomId ? parseInt(params.roomId) : null;
+  const queryClient = useQueryClient();
+  // const params = useParams();
+  // const roomId = params.roomId ? parseInt(params.roomId) : null;
   const [roomLatLng, setRoomLatLng] = useState<{ lat: number; lng: number }>({
     lat: 37.5,
     lng: 127.04,
@@ -352,6 +355,9 @@ const RoomForm = ({ type, initialData, onSubmit }: RoomFormProps) => {
         sessionStorage.removeItem(FORM_KEY);
         sessionStorage.removeItem(EXTRA_KEY);
       }
+
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["myRooms"] });
 
       handleSubmitExternal(result, newImages, deleteImageIds, roomLatLng);
     } catch (err) {

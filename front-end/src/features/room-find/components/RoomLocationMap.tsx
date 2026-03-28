@@ -2,41 +2,48 @@
 import { useEffect, useRef } from "react";
 import { loadKakaoMapScript, getLatLngFromAddress } from "../../../utils/kakaoMap"; 
 
+// 💡 1. 여기서 lat과 lng를 선택적(?)으로 받을 수 있게 추가합니다!
 interface RoomLocationMapProps {
   address: string;
+  lat?: number;
+  lng?: number;
 }
 
-const RoomLocationMap = ({ address }: RoomLocationMapProps) => {
+// 💡 2. 파라미터로 lat과 lng를 꺼내옵니다.
+const RoomLocationMap = ({ address, lat, lng }: RoomLocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initMap = async () => {
       try {
-        // 1. 카카오맵 스크립트 로드 대기 (유틸 함수)
         await loadKakaoMapScript();
 
-        // 2. 주소를 위도/경도로 변환 (유틸 함수)
-        const { lat, lng } = await getLatLngFromAddress(address);
+        // 💡 3. 백엔드에서 받은 위도/경도가 있다면 그걸 쓰고, 없다면 카카오API로 주소 변환을 시도합니다.
+        let finalLat = lat;
+        let finalLng = lng;
+
+        if (!finalLat || !finalLng) {
+          const coords = await getLatLngFromAddress(address);
+          finalLat = coords.lat;
+          finalLng = coords.lng;
+        }
 
         if (!mapRef.current || !window.kakao) return;
 
-        // 3. 변환된 좌표로 지도 중심점 설정
-        const coords = new window.kakao.maps.LatLng(lat, lng);
+        // 확실한 좌표(finalLat, finalLng)로 지도를 그립니다.
+        const coords = new window.kakao.maps.LatLng(finalLat, finalLng);
         const options = {
           center: coords,
-          level: 4, // 줌 레벨 (숫자가 작을수록 확대, 3~4가 적당합니다)
+          level: 4, 
         };
 
-        // 4. 지도 객체 생성
         const map = new window.kakao.maps.Map(mapRef.current, options);
 
-        // 5. 정중앙에 핀(마커) 꽂기
         new window.kakao.maps.Marker({
           map: map,
           position: coords,
         });
 
-        // 6. 줌에 맞게 핀을 화면 중앙으로 이동 (혹시 모를 어긋남 방지)
         map.setCenter(coords);
 
       } catch (error) {
@@ -44,10 +51,10 @@ const RoomLocationMap = ({ address }: RoomLocationMapProps) => {
       }
     };
 
-    if (address) {
+    if (address || (lat && lng)) {
       initMap();
     }
-  }, [address]);
+  }, [address, lat, lng]);
 
   return <div ref={mapRef} className="w-full h-[160px] rounded-lg shadow-sm bg-neutral-gray" />;
 };
