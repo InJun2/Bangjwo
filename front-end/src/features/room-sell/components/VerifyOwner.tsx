@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axiosInstance from "../../../utils/axiosInstances";
 import Button from "../../../components/buttons/Button";
 import InfoText from "../../../components/InfoText";
 import TitleBox from "../../../components/TitleBox";
@@ -184,12 +185,20 @@ const VerifyOwner = () => {
       <Button
         size="large"
         variant={isPhoneVerified && isCertificateVerified ? "point" : "default"}
-        onClick={() => {
+        onClick={async () => {
           if (!isPhoneVerified || !isCertificateVerified) {
             openModal("notVerifed");
             return;
           }
-          navigate(`/room/sell/success/${roomId}`);
+          
+          try {
+            await axiosInstance.patch(`/api/v1/room/${roomId}/status/on-sale`);
+            
+            navigate(`/room/sell/success/${roomId}`);
+          } catch (error) {
+            console.error("매물 상태 변경 실패:", error);
+            setToastMessage("매물 등록 처리 중 오류가 발생했습니다.");
+          }
         }}
       >
         등록하기
