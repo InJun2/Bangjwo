@@ -84,7 +84,7 @@ const BuyerContractPage = () => {
         </div>
 
         {/* 오른쪽: 챗봇 영역 */}
-        <div className="w-1/3 h-full pt-[380px] fixed left-260 bottom-70">
+        <div className="fixed bottom-10 right-10 z-[100]">
           {agreed ? (
             <ChatbotPage />
           ) : (

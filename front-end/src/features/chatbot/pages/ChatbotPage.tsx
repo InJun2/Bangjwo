@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Chatbot from "../components/Chatbot";
+import FloatingChatbot from "../components/FloatingChatbot";
 
 interface Message {
   id: number;
@@ -20,7 +20,7 @@ const ChatbotPage = () => {
 
   return (
     <div className="relative pb-10">
-      {<Chatbot messages={messages} setMessages={setMessages} />}
+      {<FloatingChatbot messages={messages} setMessages={setMessages} />}
     </div>
   );
 };

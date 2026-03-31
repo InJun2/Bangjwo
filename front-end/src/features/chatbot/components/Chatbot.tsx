@@ -87,7 +87,7 @@ const Chatbot = ({ messages, setMessages }: ChatbotProps) => {
   }, [messages]);
 
   return (
-    <div className="max-w-[360px] h-[520px] flex flex-col border border-neutral-light200 rounded-lg overflow-hidden bg-neutral-light300">
+    <div className="w-[360px] max-w-[calc(100vw-3rem)] h-[520px] flex flex-col border border-neutral-light200 rounded-lg bg-neutral-light300 shadow-2xl">
       <ChatbotHeader />
       <div
         ref={scrollRef}

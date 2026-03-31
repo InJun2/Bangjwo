@@ -1,20 +1,22 @@
-import Button from "../../../components/buttons/Button";
 import { FC } from "react";
+
 interface ChatbotNoticePageProps {
   onAgree: () => void;
 }
 
 const ChatbotNoticePage: FC<ChatbotNoticePageProps> = ({ onAgree }) => {
   return (
-    <div className="max-w-[360px] min-h-[520px] bg-neutral-light300 rounded-lg shadow-md p-6 text-neutral-black space-y-5">
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        <span className="material-symbols-rounded text-lg text-neutral-dark200">
+    <div className="w-[360px] h-[520px] flex flex-col border border-neutral-light200 rounded-lg bg-neutral-light300 shadow-2xl p-6 justify-center items-center">
+      
+      <h2 className="text-xl font-bold mb-4 text-neutral-800 flex items-center gap-2">
+        <span className="material-symbols-rounded text-neutral-dark200">
           info
         </span>
-        <span>AI 챗봇 유의사항</span>
-      </div>
+        AI 챗봇 유의사항
+      </h2>
 
-      <div className="space-y-3 text-sm leading-relaxed">
+      {/* 약관 내용이 들어가는 하얀색 박스 (스크롤 가능) */}
+      <div className="w-full flex-1 bg-white p-4 rounded border border-neutral-200 text-sm text-neutral-600 mb-6 overflow-y-auto leading-relaxed space-y-3">
         <p>
           본 챗봇이 제공하는 정보는 일반적인 부동산 계약 과정의 이해를 돕기 위한
           참고용으로 제공되는 것이며, 법적 구속력을 갖춘 법률적 자문이 아닙니다.
@@ -37,18 +39,16 @@ const ChatbotNoticePage: FC<ChatbotNoticePageProps> = ({ onAgree }) => {
         </p>
       </div>
 
-      <div className="pt-2 flex justify-center">
-        <Button
-          size="medium"
-          variant="point"
-          onClick={() => {
-            console.log("버튼 클릭됨!");
-            onAgree(); // 이게 실행돼야 setAgreed(true)
-          }}
-        >
-          동의하고 시작하기
-        </Button>
-      </div>
+      <button
+        onClick={() => {
+          console.log("동의 버튼 클릭됨!");
+          onAgree(); // 부모 컴포넌트의 setAgreed(true) 실행
+        }}
+        className="w-full bg-[#FFD700] text-neutral-900 font-bold py-3.5 rounded-lg shadow-md hover:bg-[#E6C200] transition"
+      >
+        동의하고 시작하기
+      </button>
+
     </div>
   );
 };

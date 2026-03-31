@@ -35,9 +35,15 @@ const ChatbotInput = ({ onSend }: ChatbotInputProps) => {
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
       />
-      <button onClick={handleSend}>
-        <span className="material-symbols-rounded text-2xl text-neutral-dark200">
-          send
+      <button 
+        onClick={handleSend}
+        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors ml-2"
+      >
+        <span 
+          className="material-symbols-rounded text-2xl text-black flex items-center justify-center leading-none"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
+          arrow_forward
         </span>
       </button>
     </div>
