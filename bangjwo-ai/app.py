@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -45,10 +44,13 @@ def crawl_and_update_vector_db(final_url: str):
     global vectorstore, retriever, qa_chain
 
     options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        options.add_argument('--headless')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+
+        options.binary_location = "/usr/bin/chromium"
+        driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
     
     driver.get(final_url)
     time.sleep(3)
