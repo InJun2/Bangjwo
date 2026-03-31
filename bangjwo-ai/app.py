@@ -35,7 +35,7 @@ main_url = "https://www.law.go.kr/법령/주택임대차보호법"
 headers = {"User-Agent": "Mozilla/5.0"}
 
 # GPT 모델 초기화
-llm = ChatOpenAI(model_name="gpt-4o", temperature=0, openai_api_key=openai_api_key)
+llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0, openai_api_key=openai_api_key)
 
 def crawl_and_update_vector_db(final_url: str):
     """
