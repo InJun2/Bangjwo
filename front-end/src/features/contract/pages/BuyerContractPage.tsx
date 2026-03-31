@@ -50,17 +50,15 @@ const BuyerContractPage = () => {
         <div className="flex flex-col gap-6 w-2/3">
           <div className="flex flex-col items-center gap-6">
             <NoticeDefault>
-              <div>
-                이 페이지는 <span className="text-green font-bold">임차인</span>
-                이 작성하는 주택임대차계약서 페이지예요.
-                <br />
-                계약서 내용을 잘 확인하고,{" "}
-                <span className="font-bold">초록색</span>
-                으로 표시된 항목을 작성해주세요.
-                <br />
-                수정하고 싶은 항목은 문의하기 또는 전화를 통해 임대인에게 수정을
-                요청해요.
-              </div>
+              이 페이지는 <span className="text-green font-bold">임차인</span>
+              이 작성하는 주택임대차계약서 페이지예요.
+              <br />
+              계약서 내용을 잘 확인하고,{" "}
+              <span className="font-bold">초록색</span>
+              으로 표시된 항목을 작성해주세요.
+              <br />
+              수정하고 싶은 항목은 문의하기 또는 전화를 통해 임대인에게 수정을
+              요청해요.
             </NoticeDefault>
 
             <NoticeDefault>

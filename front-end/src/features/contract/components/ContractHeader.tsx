@@ -35,13 +35,14 @@ const ContractHeader = ({
 
   return (
     <>
-      <NoticeDefault>
-        이 계약서는 법무부에서 제공하는 주택임대차표준계약서를 중개인 항목을
-        제외하여 재구성한 것입니다.
-        <br />
-        법의 보호를 받기 위해 계약서 하단의 중요확인사항을 꼭 확인하시기
-        바랍니다.
-      </NoticeDefault>
+      <div className="flex justify-center w-full">
+        <NoticeDefault>
+          이 계약서는 법무부에서 제공하는 주택임대차표준계약서를 중개인 항목을
+          제외하여 재구성했어요.
+          <br />
+          법의 보호를 받기 위해 계약서 하단의 중요확인사항을 꼭 확인해주세요.
+        </NoticeDefault>
+      </div>
 
       <h2 className="mt-10 text-2xl font-extrabold text-center">
         주택임대차계약서
