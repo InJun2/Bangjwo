@@ -1,8 +1,10 @@
 import { useState, useRef } from "react";
 import Button from "../../../components/buttons/Button";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import HeaderContract from "../../../components/headers/HeaderContract";
 import NoticeDefault from "../../../components/notices/NoticeDefault";
-import Contract, { ContractRefType } from "../components/Contract";
+import Contract, { ContractRefType, RoomDetailDto } from "../components/Contract";
 import {
   useSaveLandlordInfo,
   useFinalizeLandlordContract,
@@ -10,12 +12,23 @@ import {
 import { UpdateLandlordInfoDto } from "../data/contract.dto";
 import ChatbotNoticePage from "../../chatbot/pages/ChatbotNoticePage";
 import ChatbotPage from "../../chatbot/pages/ChatbotPage";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const SellerContractPage = () => {
   const contractRef = useRef<ContractRefType>(null);
   const [agreed, setAgreed] = useState(false);
   const navigate = useNavigate();
+
+  const { roomId, contractId } = useParams();
+
+  const { data: roomDetail } = useQuery<RoomDetailDto>({
+    queryKey: ["roomDetail", roomId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/v1/room/${roomId}`);
+      return response.data;
+    },
+    enabled: !!roomId,
+  });
 
   const { mutate: saveLandlordInfo, isPending: isSaving } =
     useSaveLandlordInfo();
@@ -33,7 +46,7 @@ const SellerContractPage = () => {
 
     const dataWithId = {
       ...data,
-      contractId: 1,
+      contractId: Number(contractId),
     };
 
     console.log(dataWithId);
@@ -84,7 +97,7 @@ const SellerContractPage = () => {
 
     const dataWithId = {
       ...data,
-      contractId: 1,
+      contractId: Number(contractId),
     };
 
     finalizeContract(dataWithId, {
@@ -125,7 +138,12 @@ const SellerContractPage = () => {
           </div>
 
           {/* ✅ 계약서 폼 컴포넌트 */}
-          <Contract mode="lessor" ref={contractRef} />
+          <Contract 
+            mode="lessor" 
+            ref={contractRef} 
+            roomData={roomDetail}
+            contractId={Number(contractId)}
+          />
 
           {/* ✅ 하단 버튼 */}
           <div className="flex justify-center gap-6 pt-8 pb-16">

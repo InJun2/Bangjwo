@@ -1,26 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EditableInputBox from "./EditableInputBox";
 import DisabledInputBox from "./DisabledInputBox";
 import NoticeGray from "../../../components/notices/NoticeGray";
 import DatePickerInput from "./DatePickerInput";
 import { MonthlyRentType } from "../data/contract.dto";
 
+interface RoomDetailData {
+  deposit?: number;
+  monthlyRent?: number;
+  maintenanceCost?: number;
+  availableFrom?: string; // "YYYY-MM-DD"
+}
+
 interface ContractBodyProps {
   mode: "lessor" | "lessee";
-  deposit: number;
-  setDeposit: (value: number) => void;
-  contractFee: number;
-  setContractFee: (value: number) => void;
-  monthlyRent: number;
-  setMonthlyRent: (value: number) => void;
+  // 🚀 숫자 또는 빈칸("")을 모두 받을 수 있도록 타입 확장
+  deposit: number | "";
+  setDeposit: (value: number | "") => void;
+  contractFee: number | "";
+  setContractFee: (value: number | "") => void;
+  monthlyRent: number | "";
+  setMonthlyRent: (value: number | "") => void;
   receiptSignature: string | null;
   openSignatureModal: (type: "receipt") => void;
   monthlyRentType: MonthlyRentType | null;
   setPaymentMethod: (value: MonthlyRentType) => void;
-  middleFee: number;
-  setMiddleFee: (value: number) => void;
-  finalPayment: number;
-  setFinalPayment: (value: number) => void;
+  middleFee: number | "";
+  setMiddleFee: (value: number | "") => void;
+  finalPayment: number | "";
+  setFinalPayment: (value: number | "") => void;
   middlePaymentDate: Date | null;
   setMiddlePaymentDate: (date: Date | null) => void;
   balancePaymentDate: Date | null;
@@ -31,16 +39,16 @@ interface ContractBodyProps {
   setMonthlyRentAccountBank: (value: string) => void;
   monthlyRentAccountNumber: string;
   setMonthlyRentAccountNumber: (value: string) => void;
-  fixedManagementFee: number;
-  setFixedManagementFee: (value: number) => void;
+  fixedManagementFee: number | "";
+  setFixedManagementFee: (value: number | "") => void;
   unfixedManagementFee: string;
   setUnfixedManagementFee: (value: string) => void;
   leaseStartDate: Date | null;
   setLeaseStartDate: (date: Date | null) => void;
   leaseEndDate: Date | null;
   setLeaseEndDate: (date: Date | null) => void;
-  facilitiesRepairStatus: boolean;
-  setFacilitiesRepairStatus: (value: boolean) => void;
+  facilitiesRepairStatus: boolean | null;
+  setFacilitiesRepairStatus: (value: boolean | null) => void;
   facilitiesRepairContent: string;
   setFacilitiesRepairContent: (value: string) => void;
   repairCompletionByBalanceDate: Date | null;
@@ -55,10 +63,14 @@ interface ContractBodyProps {
   setLandlordBurden: (value: string) => void;
   tenantBurden: string;
   setTenantBurden: (value: string) => void;
+  roomData?: RoomDetailData;
+  savedContractData?: any;
 }
 
 const ContractBody = ({
   mode,
+  roomData,
+  savedContractData,
   deposit,
   setDeposit,
   contractFee,
@@ -101,45 +113,40 @@ const ContractBody = ({
 }: ContractBodyProps) => {
   const isEditable = mode === "lessor";
 
-  console.log(tenantBurden); //임시 타입스크립트 오류 해결용
+  useEffect(() => {
+    if (savedContractData) {
+      setDeposit(savedContractData.depositAmount ?? "");
+      setContractFee(savedContractData.contractFee ?? "");
+      return;
+    }
 
-  if (!isEditable || isEditable) {
-    setDeposit(100000000);
-    setContractFee(50000000);
-    setMiddleFee(30000000);
-    setMonthlyRent(2000000);
-    setFinalPayment(20000000);
-    setMonthlyRentAccountNumber("1436534123446");
-    setMonthlyRentAccountBank("신한은행");
-    setFixedManagementFee(100000);
-    setUnfixedManagementFee("전기세, 수도세, 가스비 등");
-    setMonthlyRentPaymentDate("15");
-  }
+    if (roomData) {
+      setDeposit(roomData.deposit ?? "");
+      setMonthlyRent(roomData.monthlyRent ?? "");
+      setFixedManagementFee(roomData.maintenanceCost ?? "");
+      if (roomData.availableFrom) setLeaseStartDate(new Date(roomData.availableFrom));
+      
+      if (roomData.deposit) {
+        setContractFee(roomData.deposit * 0.1); 
+      }
+    } else {
+      // roomData가 없으면 빈칸 유지
+      setDeposit("");
+      setMonthlyRent("");
+      setFixedManagementFee("");
+    }
+  }, [roomData, savedContractData]);
 
-  // 하위 컴포넌트 내부에서만 사용하는 상태들
-  const [monthlyRentDay, setMonthlyRentDay] = useState("15");
-  // const [monthlyRentAccountNumber, setMonthlyRentAccountNumber] = useState("");
-  // const [fixedManagementFee, setFixedManagementFee] = useState(0);
-  // const [variableMaintenance, setVariableMaintenance] = useState("");
+  const [monthlyRentDay, setMonthlyRentDay] = useState("");
 
-  const [repairFacility, setRepairFacility] = useState<
-    "none" | "needed" | null
-  >("none");
-  const [repairDetail, setRepairDetail] = useState("특별히 없음");
-  const [completionOption, setCompletionOption] = useState<
-    "balance-day" | "custom" | null
-  >("custom");
-  const [repairCompletionDate, setRepairCompletionDate] = useState<Date | null>(
-    new Date(Date.now())
-  );
+  const [repairFacility, setRepairFacility] = useState<"none" | "needed" | null>(null); 
+  const [repairDetail, setRepairDetail] = useState("");
+  const [completionOption, setCompletionOption] = useState<"balance-day" | "custom" | null>(null); 
+  const [repairCompletionDate, setRepairCompletionDate] = useState<Date | null>(null);
   const [repairCustomEtc, setRepairCustomEtc] = useState("");
-  const [unrepairedOption, setUnrepairedOption] = useState<
-    "balance-day" | "custom" | null
-  >("balance-day");
-  const [unrepairedDeadline, setUnrepairedDeadline] = useState<Date | null>(
-    new Date(Date.now())
-  );
-  const [unrepairedCustomEtc, setUnrepairedCustomEtc] = useState("배상한다.");
+  const [unrepairedOption, setUnrepairedOption] = useState<"balance-day" | "custom" | null>(null); 
+  const [unrepairedDeadline, setUnrepairedDeadline] = useState<Date | null>(null);
+  const [unrepairedCustomEtc, setUnrepairedCustomEtc] = useState("");
 
   const [lessorDuty, setLessorDuty] = useState("난방 및 상하수도");
   const [lesseeDuty, setLesseeDuty] = useState("생활하며 파손되는 부분");
@@ -212,14 +219,14 @@ const ContractBody = ({
           <span className="w-24 text-base font-medium">보증금</span>
           {isEditable ? (
             <EditableInputBox
-              value={deposit.toString()}
-              onChange={(val) => setDeposit(Number(val))}
-              placeholder="0"
+              value={deposit === "" ? "" : deposit.toString()}
+              onChange={(val) => setDeposit(val === "" ? "" : Number(val))}
+              placeholder="금액 입력"
               customWidth="w-[160px]"
             />
           ) : (
             <DisabledInputBox
-              value={deposit.toString()}
+              value={deposit === "" ? "" : deposit.toString()}
               placeholder="0"
               customWidth="w-[160px]"
             />
@@ -232,14 +239,14 @@ const ContractBody = ({
           <span className="w-24 text-base font-medium">계약금</span>
           {isEditable ? (
             <EditableInputBox
-              value={contractFee.toString()}
-              onChange={(val) => setContractFee(Number(val))}
-              placeholder="0"
+              value={contractFee === "" ? "" : contractFee.toString()}
+              onChange={(val) => setContractFee(val === "" ? "" : Number(val))}
+              placeholder="금액 입력"
               customWidth="w-[160px]"
             />
           ) : (
             <DisabledInputBox
-              value={contractFee.toString()}
+              value={contractFee === "" ? "" : contractFee.toString()}
               placeholder="0"
               customWidth="w-[160px]"
             />
@@ -252,14 +259,14 @@ const ContractBody = ({
           <span className="w-24 text-base font-medium">차임(월세)</span>
           {isEditable ? (
             <EditableInputBox
-              value={monthlyRent.toString()}
-              onChange={(val) => setMonthlyRent(Number(val))}
-              placeholder="0"
+              value={monthlyRent === "" ? "" : monthlyRent.toString()}
+              onChange={(val) => setMonthlyRent(val === "" ? "" : Number(val))}
+              placeholder="금액 입력"
               customWidth="w-[160px]"
             />
           ) : (
             <DisabledInputBox
-              value={monthlyRent.toString()}
+              value={monthlyRent === "" ? "" : monthlyRent.toString()}
               placeholder="0"
               customWidth="w-[160px]"
             />
@@ -290,14 +297,14 @@ const ContractBody = ({
           <span className="w-24 text-base font-medium">중도금</span>
           {isEditable ? (
             <EditableInputBox
-              value={middleFee.toString()}
-              onChange={(val) => setMiddleFee(Number(val))}
-              placeholder="0"
+              value={middleFee === "" ? "" : middleFee.toString()}
+              onChange={(val) => setMiddleFee(val === "" ? "" : Number(val))}
+              placeholder="금액 입력"
               customWidth="w-[160px]"
             />
           ) : (
             <DisabledInputBox
-              value={middleFee.toString()}
+              value={middleFee === "" ? "" : middleFee.toString()}
               placeholder="0"
               customWidth="w-[160px]"
             />
@@ -316,14 +323,14 @@ const ContractBody = ({
           <span className="w-24 text-base font-medium">잔금</span>
           {isEditable ? (
             <EditableInputBox
-              value={finalPayment.toString()}
-              onChange={(val) => setFinalPayment(Number(val))}
-              placeholder="0"
+              value={finalPayment === "" ? "" : finalPayment.toString()}
+              onChange={(val) => setFinalPayment(val === "" ? "" : Number(val))}
+              placeholder="금액 입력"
               customWidth="w-[160px]"
             />
           ) : (
             <DisabledInputBox
-              value={finalPayment.toString()}
+              value={finalPayment === "" ? "" : finalPayment.toString()}
               placeholder="0"
               customWidth="w-[160px]"
             />
@@ -418,14 +425,14 @@ const ContractBody = ({
         <span className="w-32 text-base font-medium">정액인 경우</span>
         {isEditable ? (
           <EditableInputBox
-            value={fixedManagementFee.toString()}
-            onChange={(val) => setFixedManagementFee(Number(val))}
-            placeholder="0"
+            value={fixedManagementFee === "" ? "" : fixedManagementFee.toString()}
+            onChange={(val) => setFixedManagementFee(val === "" ? "" : Number(val))}
+            placeholder="금액 입력"
             customWidth="w-[160px]"
           />
         ) : (
           <DisabledInputBox
-            value={fixedManagementFee.toString()}
+            value={fixedManagementFee === "" ? "" : fixedManagementFee.toString()}
             placeholder="0"
             customWidth="w-[160px]"
           />
@@ -462,6 +469,7 @@ const ContractBody = ({
           <DatePickerInput
             selectedDate={leaseStartDate}
             onChange={(date) => setLeaseStartDate(date)}
+            disabled={!isEditable}
           />
         </span>
         <span className="font-normal ml-2">
@@ -471,6 +479,7 @@ const ContractBody = ({
           <DatePickerInput
             selectedDate={leaseEndDate}
             onChange={(date) => setLeaseEndDate(date)}
+            disabled={!isEditable}
           />
         </span>
         <span className="font-normal ml-2">까지로 한다.</span>
@@ -487,52 +496,38 @@ const ContractBody = ({
       <div className="mt-4 flex gap-4 ml-2">
         <div className="w-32 text-base font-medium mt-2">수리 필요 시설</div>
         <div
-          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit ${
-            isEditable
-              ? "border-neutral-gray"
+          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit transition-colors ${
+            !isEditable
+              ? "border-neutral-light100 bg-neutral-light200"
               : repairFacility === null
-              ? "border-green"
-              : "border-neutral-gray"
+              ? "border-green bg-white"
+              : "border-neutral-gray bg-white"
           }`}
         >
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="repairFacility"
               value="none"
               checked={repairFacility === "none"}
-              onChange={() => {
-                isEditable && setRepairFacility("none");
-                setFacilitiesRepairStatus(false);
-              }}
+              onChange={() => { if(isEditable) { setRepairFacility("none"); setFacilitiesRepairStatus(false); } }}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             없음
           </label>
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="repairFacility"
               value="needed"
               checked={repairFacility === "needed"}
-              onChange={() => {
-                isEditable && setRepairFacility("needed");
-                setFacilitiesRepairStatus(true);
-              }}
+              onChange={() => { if(isEditable) { setRepairFacility("needed"); setFacilitiesRepairStatus(true); } }}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             있음 (수리할 내용:
-            {isEditable ? (
+            {isEditable && repairFacility === "needed" ? (
               <EditableInputBox
                 value={repairDetail}
                 onChange={handleFixThings}
@@ -540,11 +535,7 @@ const ContractBody = ({
                 customWidth="w-[240px]"
               />
             ) : (
-              <DisabledInputBox
-                value={repairDetail}
-                placeholder="수리할 내용 입력"
-                customWidth="w-[240px]"
-              />
+              <DisabledInputBox value={repairDetail} placeholder="수리할 내용 입력" customWidth="w-[240px]" />
             )}
             )
           </label>
@@ -555,19 +546,15 @@ const ContractBody = ({
       <div className="mt-4 flex gap-4 ml-2">
         <div className="w-32 text-base font-medium mt-2">수리 완료 시기</div>
         <div
-          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit ${
-            isEditable
-              ? "border-neutral-gray"
+          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit transition-colors ${
+            !isEditable
+              ? "border-neutral-light100 bg-neutral-light200"
               : completionOption === null
-              ? "border-green"
-              : "border-neutral-gray"
+              ? "border-green bg-white"
+              : "border-neutral-gray bg-white"
           }`}
         >
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="completionOption"
@@ -575,21 +562,18 @@ const ContractBody = ({
               checked={completionOption === "balance-day"}
               onChange={() => isEditable && setCompletionOption("balance-day")}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             잔금지급 기일인{" "}
             <DatePickerInput
               selectedDate={repairCompletionDate}
               onChange={handleRepairDate}
-              disabled={!isEditable}
+              disabled={!isEditable || completionOption !== "balance-day"}
             />{" "}
             까지
           </label>
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="completionOption"
@@ -597,10 +581,10 @@ const ContractBody = ({
               checked={completionOption === "custom"}
               onChange={() => isEditable && setCompletionOption("custom")}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             기타 (
-            {isEditable ? (
+            {isEditable && completionOption === "custom" ? (
               <EditableInputBox
                 value={repairCustomEtc}
                 onChange={handleRepairEtc}
@@ -608,11 +592,7 @@ const ContractBody = ({
                 customWidth="w-[280px]"
               />
             ) : (
-              <DisabledInputBox
-                value={repairCustomEtc}
-                placeholder="기타 사유 입력"
-                customWidth="w-[280px]"
-              />
+              <DisabledInputBox value={repairCustomEtc} placeholder="기타 사유 입력" customWidth="w-[280px]" />
             )}
             )
           </label>
@@ -625,19 +605,15 @@ const ContractBody = ({
           약정한 수리 완료 시기까지 미 수리한 경우
         </div>
         <div
-          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit ${
-            isEditable
-              ? "border-neutral-gray"
+          className={`border-3 px-4 py-3 rounded-sm flex flex-col gap-2 w-fit transition-colors ${
+            !isEditable
+              ? "border-neutral-light100 bg-neutral-light200"
               : unrepairedOption === null
-              ? "border-green"
-              : "border-neutral-gray"
+              ? "border-green bg-white"
+              : "border-neutral-gray bg-white"
           }`}
         >
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="unrepairedOption"
@@ -645,21 +621,17 @@ const ContractBody = ({
               checked={unrepairedOption === "balance-day"}
               onChange={() => isEditable && setUnrepairedOption("balance-day")}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             잔금지급 기일인{" "}
             <DatePickerInput
               selectedDate={unrepairedDeadline}
               onChange={handleUnrepairedDate}
-              disabled={!isEditable}
+              disabled={!isEditable || unrepairedOption !== "balance-day"}
             />{" "}
             까지
           </label>
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              !isEditable && "cursor-not-allowed"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${!isEditable && "cursor-not-allowed"}`}>
             <input
               type="radio"
               name="unrepairedOption"
@@ -667,10 +639,10 @@ const ContractBody = ({
               checked={unrepairedOption === "custom"}
               onChange={() => isEditable && setUnrepairedOption("custom")}
               disabled={!isEditable}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none checked:bg-neutral-dark200 transition-colors"
             />
             기타 (
-            {isEditable ? (
+            {isEditable && unrepairedOption === "custom" ? (
               <EditableInputBox
                 value={unrepairedCustomEtc}
                 onChange={handleUnrepairedEtc}
@@ -678,11 +650,7 @@ const ContractBody = ({
                 customWidth="w-[280px]"
               />
             ) : (
-              <DisabledInputBox
-                value={unrepairedCustomEtc}
-                placeholder="기타 사유 입력"
-                customWidth="w-[280px]"
-              />
+              <DisabledInputBox value={unrepairedCustomEtc} placeholder="기타 사유 입력" customWidth="w-[280px]" />
             )}
             )
           </label>

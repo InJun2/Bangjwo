@@ -57,23 +57,6 @@ const HouseInfoSection = ({
   const [showLandNotice, setShowLandNotice] = useState(false);
   const [showBuildingNotice, setShowBuildingNotice] = useState(false);
   const isLessee = mode === "lessee";
-  address = address || "테헤란로 212 멀티캠퍼스";
-  contractType = contractType || "NEW";
-  detailAddress = detailAddress || "1202호";
-  landPurpose = landPurpose || "대";
-  landArea = landArea || "1200";
-  buildingStructure = buildingStructure || "철근콘크리트";
-  buildingUsage = buildingUsage || "사무실";
-  buildingArea = buildingArea || "1100";
-  leaseArea = leaseArea || "550";
-  rentalPartDetailAddress = rentalPartDetailAddress || "1202호";
-
-  unpaidTaxOption = unpaidTaxOption || false;
-  priorityDateOption = priorityDateOption || null;
-  unpaidTaxSignature = unpaidTaxSignature || null;
-  priorityDateSignature = priorityDateSignature || null;
-
-  
 
   return (
     <div className="mt-10">
@@ -96,14 +79,14 @@ const HouseInfoSection = ({
             {isLessee ? (
               <DisabledInputBox
                 value={address}
-                placeholder="테헤란로 212 멀티캠퍼스"
+                placeholder="주소를 검색해주세요"
                 customWidth="w-[340px]"
               />
             ) : (
               <EditableInputBox
                 value={address}
                 onChange={(val) => onChange("address", val)}
-                placeholder="테헤란로 212 멀티캠퍼스"
+                placeholder="클릭하여 주소 검색"
                 maxLength={50}
                 customWidth="w-[340px]"
               />
@@ -114,14 +97,14 @@ const HouseInfoSection = ({
           {isLessee ? (
             <DisabledInputBox
               value={detailAddress}
-              placeholder="1202호"
+              placeholder="상세주소"
               customWidth="w-[300px]"
             />
           ) : (
             <EditableInputBox
               value={detailAddress}
               onChange={(val) => onChange("detailAddress", val)}
-              placeholder="1202호"
+              placeholder="상세주소 입력 (예: 101동 202호)"
               maxLength={50}
               customWidth="w-[300px]"
             />
@@ -169,14 +152,14 @@ const HouseInfoSection = ({
           {isLessee ? (
             <DisabledInputBox
               value={landArea}
-              placeholder="1200"
+              placeholder="0"
               customWidth="w-[160px]"
             />
           ) : (
             <EditableInputBox
               value={landArea}
               onChange={(val) => onChange("landArea", val)}
-              placeholder="1200"
+              placeholder="0"
               customWidth="w-[160px]"
             />
           )}
@@ -214,14 +197,14 @@ const HouseInfoSection = ({
           {isLessee ? (
             <DisabledInputBox
               value={buildingStructure}
-              placeholder="철근콘크리트"
+              placeholder="구조"
               customWidth="w-[160px]"
             />
           ) : (
             <EditableInputBox
               value={buildingStructure}
               onChange={(val) => onChange("buildingStructure", val)}
-              placeholder="철근콘크리트"
+              placeholder="철근콘크리트 등"
               customWidth="w-[160px]"
             />
           )}
@@ -229,14 +212,14 @@ const HouseInfoSection = ({
           {isLessee ? (
             <DisabledInputBox
               value={buildingUsage}
-              placeholder="사무실"
+              placeholder="용도"
               customWidth="w-[160px]"
             />
           ) : (
             <EditableInputBox
               value={buildingUsage}
               onChange={(val) => onChange("buildingUsage", val)}
-              placeholder="사무실"
+              placeholder="단독주택 등"
               customWidth="w-[160px]"
             />
           )}
@@ -244,14 +227,14 @@ const HouseInfoSection = ({
           {isLessee ? (
             <DisabledInputBox
               value={buildingArea}
-              placeholder="1100"
+              placeholder="0"
               customWidth="w-[160px]"
             />
           ) : (
             <EditableInputBox
               value={buildingArea}
               onChange={(val) => onChange("buildingArea", val)}
-              placeholder="1100"
+              placeholder="0"
               customWidth="w-[160px]"
             />
           )}
@@ -271,14 +254,14 @@ const HouseInfoSection = ({
         {isLessee ? (
           <DisabledInputBox
             value={rentalPartDetailAddress}
-            placeholder="1202호"
+            placeholder="임차할 부분"
             customWidth="w-[400px]"
           />
         ) : (
           <EditableInputBox
             value={rentalPartDetailAddress}
             onChange={(val) => onChange("rentalPartDetailAddress", val)}
-            placeholder="1202호"
+            placeholder="임차할 부분 상세 기재 (예: 2층 전체)"
             maxLength={100}
             customWidth="w-[400px]"
           />
@@ -287,14 +270,14 @@ const HouseInfoSection = ({
         {isLessee ? (
           <DisabledInputBox
             value={leaseArea}
-            placeholder="550"
+            placeholder="0"
             customWidth="w-[160px]"
           />
         ) : (
           <EditableInputBox
             value={leaseArea}
             onChange={(val) => onChange("leaseArea", val)}
-            placeholder="550"
+            placeholder="0"
             customWidth="w-[160px]"
           />
         )}
@@ -305,6 +288,7 @@ const HouseInfoSection = ({
         <span className="text-base font-medium whitespace-nowrap mt-[6px]">
           계약의종류
         </span>
+
         <ContractTypeSelector
           mode={mode}
           contractType={contractType}
@@ -317,59 +301,46 @@ const HouseInfoSection = ({
           미납 국세·지방세
         </span>
         <div
-          className={`border-3 rounded-sm p-4 flex flex-col gap-3 w-fit ${
+          className={`border-3 rounded-sm p-4 flex flex-col gap-3 w-fit transition-colors ${
             isLessee
               ? "bg-neutral-light200 border-neutral-light100"
-              : "bg-white " +
-                (unpaidTaxOption === null
-                  ? "border-green"
-                  : "border-neutral-gray")
+              : unpaidTaxOption === null
+              ? "border-green bg-white"
+              : "border-neutral-gray bg-white"
           }`}
         >
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              isLessee ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}>
             <input
               type="radio"
               name="unpaidTax"
               value="none"
-              checked={!unpaidTaxOption}
-              onChange={() =>
-                !isLessee && onOptionChange("unpaidTaxOption", "none")
-              }
+              checked={unpaidTaxOption === false}
+              onChange={() => !isLessee && onOptionChange("unpaidTaxOption", "none")}
               disabled={isLessee}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none rounded-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 appearance-none rounded-none checked:bg-neutral-dark200 transition-colors"
             />
             없음 ( 임대인 서명
             <div
               onClick={() => !isLessee && openSignatureModal("unpaid")}
-              className={`w-[100px] h-[32px] border-2 border-neutral-light100 bg-neutral-light200 ${
-                isLessee ? "cursor-not-allowed" : "cursor-pointer"
-              }`}
+              className={`w-[100px] h-[32px] border-2 flex items-center justify-center ${
+                !isLessee && unpaidTaxOption === false && !unpaidTaxSignature
+                  ? "border-green bg-green/10" // 서명 필요 시 초록색 테두리+배경
+                  : "border-neutral-light100 bg-neutral-light200"
+              } ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              {unpaidTaxSignature ? (
-                <img src={unpaidTaxSignature} alt="서명" />
-              ) : null}
+              {unpaidTaxSignature ? <img src={unpaidTaxSignature} alt="서명" className="h-full object-contain" /> : null}
             </div>
             (인) )
           </label>
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              isLessee ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}>
             <input
               type="radio"
               name="unpaidTax"
               value="exist"
-              checked={unpaidTaxOption}
-              onChange={() =>
-                !isLessee && onOptionChange("unpaidTaxOption", "exist")
-              }
+              checked={unpaidTaxOption === true}
+              onChange={() => !isLessee && onOptionChange("unpaidTaxOption", "exist")}
               disabled={isLessee}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none rounded-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 appearance-none rounded-none checked:bg-neutral-dark200 transition-colors"
             />
             있음
           </label>
@@ -381,59 +352,47 @@ const HouseInfoSection = ({
           선순위 확정일자 현황
         </span>
         <div
-          className={`border-3 rounded-sm p-4 flex flex-col gap-3 w-fit ${
+          className={`border-3 rounded-sm p-4 flex flex-col gap-3 w-fit transition-colors ${
             isLessee
               ? "bg-neutral-light200 border-neutral-light100"
-              : "bg-white " +
-                (priorityDateOption === null
-                  ? "border-green"
-                  : "border-neutral-gray")
+              : priorityDateOption === null
+              ? "border-green bg-white"
+              : "border-neutral-gray bg-white"
           }`}
         >
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              isLessee ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}>
             <input
               type="radio"
               name="priorityDate"
               value="none"
               checked={priorityDateOption === "none"}
-              onChange={() =>
-                !isLessee && onOptionChange("priorityDateOption", "none")
-              }
+              onChange={() => !isLessee && onOptionChange("priorityDateOption", "none")}
               disabled={isLessee}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none rounded-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 appearance-none rounded-none checked:bg-neutral-dark200 transition-colors"
             />
             해당 없음 ( 임대인 서명
+            {/* 🚀 내부 박스: '해당 없음'을 선택했는데 서명이 없으면 초록색으로 강조! */}
             <div
               onClick={() => !isLessee && openSignatureModal("priority")}
-              className={`w-[100px] h-[32px] border-2 border-neutral-light100 bg-neutral-light200 ${
-                isLessee ? "cursor-not-allowed" : "cursor-pointer"
-              }`}
+              className={`w-[100px] h-[32px] border-2 flex items-center justify-center ${
+                !isLessee && priorityDateOption === "none" && !priorityDateSignature
+                  ? "border-green bg-green/10" 
+                  : "border-neutral-light100 bg-neutral-light200"
+              } ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              {priorityDateSignature ? (
-                <img src={priorityDateSignature} alt="서명" />
-              ) : null}
+              {priorityDateSignature ? <img src={priorityDateSignature} alt="서명" className="h-full object-contain" /> : null}
             </div>
             (인) )
           </label>
-          <label
-            className={`flex items-center gap-2 text-sm font-bold ${
-              isLessee ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
-          >
+          <label className={`flex items-center gap-2 text-sm font-bold ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}>
             <input
               type="radio"
               name="priorityDate"
               value="exist"
               checked={priorityDateOption === "exist"}
-              onChange={() =>
-                !isLessee && onOptionChange("priorityDateOption", "exist")
-              }
+              onChange={() => !isLessee && onOptionChange("priorityDateOption", "exist")}
               disabled={isLessee}
-              className="w-[16px] h-[16px] border-2 border-neutral-dark200 bg-white appearance-none rounded-none checked:bg-neutral-dark200 transition-colors disabled:cursor-not-allowed"
+              className="w-[16px] h-[16px] border-2 border-neutral-dark200 appearance-none rounded-none checked:bg-neutral-dark200 transition-colors"
             />
             해당 있음
           </label>

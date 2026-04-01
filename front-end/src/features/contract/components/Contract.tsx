@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   Dispatch,
   SetStateAction,
+  useEffect,
 } from "react";
 import ContractHeader from "./ContractHeader";
 import HouseInfoSection from "./HouseInfoSection";
@@ -23,6 +24,18 @@ export interface ContractRefType {
 
 interface ContractProps {
   mode: "lessor" | "lessee";
+  roomData?: RoomDetailDto;
+  contractId?: number;
+}
+
+export interface RoomDetailDto {
+  address: string;
+  addressDetail: string;
+  deposit: number;
+  monthlyRent: number;
+  maintenanceCost: number;
+  availableFrom: string;
+  exclusiveArea: number;
 }
 
 interface FooterInfo {
@@ -37,7 +50,7 @@ interface FooterState {
   lessee: FooterInfo;
 }
 
-const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
+const Contract = forwardRef<ContractRefType, ContractProps>(({ mode, roomData, contractId }, ref) => {
   // LeaseType를 "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null 으로 제한
   const [leaseType, setLeaseType] = useState<
     "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null
@@ -58,28 +71,28 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
   // 내부 상태를 ContractType | null 로 관리 (하위 컴포넌트에는 string으로 전달)
   const [contractType, setContractType] = useState<ContractType | null>(null);
 
-  const [taxArrears, setTaxArrears] = useState(false);
-  const [priorityConfirmedDateYn, setPriorityConfirmedDateYn] = useState(false);
+  const [taxArrears, setTaxArrears] = useState<boolean | null>(null);
+  const [priorityConfirmedDateYn, setPriorityConfirmedDateYn] = useState<boolean | null>(null);
 
   // 금액 및 날짜 관련 상태
-  const [depositAmount, setDepositAmount] = useState(0);
-  const [contractFee, setContractFee] = useState(0);
-  const [middleFee, setMiddleFee] = useState(0);
+  const [depositAmount, setDepositAmount] = useState<number | "">("");
+  const [contractFee, setContractFee] = useState<number | "">("");
+  const [middleFee, setMiddleFee] = useState<number | "">("");
   const [interimPaymentDate, setInterimPaymentDate] = useState("");
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState<number | "">("");
   const [balancePaymentDate, setBalancePaymentDate] = useState("");
-  const [monthlyRent, setMonthlyRent] = useState(0);
+  const [monthlyRent, setMonthlyRent] = useState<number | "">("");
   const [monthlyRentPaymentDate, setMonthlyRentPaymentDate] = useState("");
   const [monthlyRentType, setMonthlyRentType] =
     useState<MonthlyRentType | null>(null);
   const [monthlyRentAccountBank, setMonthlyRentAccountBank] = useState("");
   const [monthlyRentAccountNumber, setMonthlyRentAccountNumber] = useState("");
-  const [fixedManagementFee, setFixedManagementFee] = useState(0);
+  const [fixedManagementFee, setFixedManagementFee] = useState<number | "">("");
   const [unfixedManagementFee, setUnfixedManagementFee] = useState("");
   const [leaseStartDate, setLeaseStartDate] = useState<string | null>(null);
 
   const [leaseEndDate, setLeaseEndDate] = useState("");
-  const [facilitiesRepairStatus, setFacilitiesRepairStatus] = useState(false);
+  const [facilitiesRepairStatus, setFacilitiesRepairStatus] = useState<boolean | null>(null);
   const [facilitiesRepairContent, setFacilitiesRepairContent] = useState("");
   const [repairCompletionByBalanceDate, setRepairCompletionByBalanceDate] =
     useState("");
@@ -92,13 +105,11 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
   const [moveInRegistrationDate, setMoveInRegistrationDate] = useState("");
   const [unpaidAmount, setUnpaidAmount] = useState(0);
   const [disputeResolution, setDisputeResolution] = useState(false);
-  const [isHousingReconstructionPlanned, setIsHousingReconstructionPlanned] =
-    useState(false);
+  const [isHousingReconstructionPlanned, setIsHousingReconstructionPlanned] = useState<boolean | null>(null);
+  const [isDetailedAddressConsentGiven, setIsDetailedAddressConsentGiven] = useState<boolean | null>(null);
   const [constructionPeriod, setConstructionPeriod] = useState("");
   const [estimatedConstructionDuration, setEstimatedConstructionDuration] =
     useState(0);
-  const [isDetailedAddressConsentGiven, setIsDetailedAddressConsentGiven] =
-    useState(false);
   const [etc, setEtc] = useState<string[]>([]);
 
   const [contractWrittenDate, setContractWrittenDate] = useState("");
@@ -123,6 +134,34 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
 
   const [receiptSignature, setReceiptSignature] = useState<string | null>(null);
 
+  useEffect(() => {
+      if (roomData) {
+        setRentalPropertyAddress(roomData.address || "");
+        setRentalPartAddress(roomData.addressDetail || "");
+        setDepositAmount(roomData.deposit || "");
+        setMonthlyRent(roomData.monthlyRent || "");
+        setFixedManagementFee(roomData.maintenanceCost || "");
+        
+        if (roomData.deposit) {
+          setContractFee(roomData.deposit * 0.1); 
+        }
+
+        if (roomData.availableFrom) {
+          setLeaseStartDate(new Date(roomData.availableFrom).toISOString());
+        }
+        
+        if (roomData.exclusiveArea) {
+          setRentalPartArea(roomData.exclusiveArea.toString());
+        }
+      } else {
+        setRentalPropertyAddress("");
+        setRentalPartAddress("");
+        setDepositAmount("");
+        setMonthlyRent("");
+        setFixedManagementFee("");
+      }
+    }, [roomData]);
+
   const openSignatureModal = (type: "unpaid" | "priority" | "receipt") => {
     if (type === "unpaid" || type === "priority" || type === "receipt") {
       setActiveSignatureType(type);
@@ -143,7 +182,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
 
   useImperativeHandle(ref, () => ({
     getFormData: (): UpdateLandlordInfoDto => ({
-      contractId: 1,
+      contractId: contractId || 0,
       leaseType,
       rentalPropertyAddress,
       rentalPartAddress,
@@ -159,24 +198,24 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
       previousLeaseEndDate: "",
       previousDepositAmount: 0,
       previousMonthlyRent: 0,
-      taxArrears,
-      priorityConfirmedDateYn,
-      depositAmount,
-      contractFee,
-      middleFee,
+      taxArrears: taxArrears ?? false,
+      priorityConfirmedDateYn: priorityConfirmedDateYn ?? false,
+      depositAmount: Number(depositAmount) || 0,
+      contractFee: Number(contractFee) || 0,
+      middleFee: Number(middleFee) || 0,
       interimPaymentDate,
-      balance,
+      balance: Number(balance) || 0,
       balancePaymentDate,
-      monthlyRent,
+      monthlyRent: Number(monthlyRent) || 0,
       monthlyRentPaymentDate,
       monthlyRentType,
       monthlyRentAccountBank,
       monthlyRentAccountNumber,
-      fixedManagementFee,
+      fixedManagementFee: Number(fixedManagementFee) || 0,
       unfixedManagementFee,
       leaseStartDate: leaseStartDate ?? "",
       leaseEndDate,
-      facilitiesRepairStatus,
+      facilitiesRepairStatus: facilitiesRepairStatus ?? false,
       facilitiesRepairContent,
       repairCompletionByBalanceDate,
       repairCompletionEtc,
@@ -186,11 +225,11 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
       tenantBurden,
       moveInRegistrationDate,
       unpaidAmount,
-      disputeResolution,
-      isHousingReconstructionPlanned,
+      disputeResolution: disputeResolution ?? false,
+      isHousingReconstructionPlanned: isHousingReconstructionPlanned ?? false,
       constructionPeriod,
       estimatedConstructionDuration,
-      isDetailedAddressConsentGiven,
+      isDetailedAddressConsentGiven: isDetailedAddressConsentGiven ?? false,
       etc,
       contractWrittenDate,
       // Footer 정보 (임대인 정보 사용)
@@ -229,7 +268,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
         buildingArea={propertyArea}
         leaseDetail={rentalPartDetailAddress}
         leaseArea={rentalPartArea}
-        unpaidTaxOption={taxArrears}
+        unpaidTaxOption={taxArrears as any}
         priorityDateOption={priorityConfirmedDateYn ? "exist" : "none"}
         unpaidTaxSignature={unpaidTaxSignature}
         priorityDateSignature={priorityDateSignature}
@@ -334,6 +373,8 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode }, ref) => {
         setTenantBurden={setTenantBurden}
         receiptSignature={receiptSignature}
         openSignatureModal={openSignatureModal}
+        priorityDateOption={priorityConfirmedDateYn === null ? null : (priorityConfirmedDateYn ? "exist" : "none")}
+        unpaidTaxSignature={unpaidTaxSignature}
       />
 
       <SpecialTerms

@@ -10,16 +10,16 @@ interface SpecialTermsProps {
   setMoveInRegistrationDate: (date: Date | null) => void;
   unpaidAmount: number;
   setUnpaidAmount: (value: number) => void;
-  disputeResolution: boolean;
-  setDisputeResolution: (value: boolean) => void;
-  isHousingReconstructionPlanned: boolean;
-  setIsHousingReconstructionPlanned: (value: boolean) => void;
+  disputeResolution: boolean | null;
+  setDisputeResolution: (value: boolean | null) => void;
+  isHousingReconstructionPlanned: boolean | null;
+  setIsHousingReconstructionPlanned: (value: boolean | null) => void;
   constructionPeriod: string;
   setConstructionPeriod2: (value: string) => void;
   estimatedConstructionDuration: number;
   setEstimatedConstructionDuration: (value: number) => void;
-  isDetailedAddressConsentGiven: boolean;
-  setIsDetailedAddressConsentGiven: (value: boolean) => void;
+  isDetailedAddressConsentGiven: boolean | null;
+  setIsDetailedAddressConsentGiven: (value: boolean | null) => void;
   etc: string[];
   setEtc: (value: string[]) => void;
 }
@@ -38,17 +38,16 @@ const SpecialTerms = ({
 }: SpecialTermsProps) => {
   const isEditable = mode === "lessor";
 
-  const [moveInDate, setMoveInDate] = useState<Date | null>(new Date(Date.now()));
-  const [taxAmount, setTaxAmount] = useState("50000000");
-  const [disputeConsent, setDisputeConsent] = useState<
-    "agree" | "disagree" | null
-  >("agree");
-  const [rebuildPlan, setRebuildPlan] = useState<"none" | "exist" | null>("none");
+  const [moveInDate, setMoveInDate] = useState<Date | null>(null);
+  const [taxAmount, setTaxAmount] = useState("");
+  
+  // 🚀 핵심: 초기값을 모두 null로 변경하여 처음엔 무조건 겉에 초록 테두리가 뜨게 합니다.
+  const [disputeConsent, setDisputeConsent] = useState<"agree" | "disagree" | null>(null);
+  const [rebuildPlan, setRebuildPlan] = useState<"none" | "exist" | null>(null);
+  const [ownerConsent, setOwnerConsent] = useState<"agree" | "disagree" | null>(null);
+
   const [constructionPeriod, setConstructionPeriod] = useState("");
   const [constructionDuration, setConstructionDuration] = useState("");
-  const [ownerConsent, setOwnerConsent] = useState<"agree" | "disagree" | null>(
-    "agree"
-  );
 
   const [customTerms, setCustomTerms] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -119,9 +118,8 @@ const SpecialTerms = ({
               <EditableInputBox
                 value={taxAmount}
                 onChange={handleTax}
-                placeholder="금액"
-                customWidth="w-[120px]"
-                disabled={false}
+                placeholder="50,000,000"
+                customWidth={`w-[140px] transition-colors ${!taxAmount ? "border-2 border-green ring-green" : ""}`}
               />
             ) : (
               <DisabledInputBox
@@ -134,16 +132,17 @@ const SpecialTerms = ({
           원을 초과할 경우, 계약 해제가 가능하다.
         </li>
 
+        {/* 1. 분쟁의 해결 */}
         <li>
           • 주택 임대차 계약과 관련한 분쟁이 있는 경우 먼저 분쟁조정위원회에
           조정을 신청한다.
           <div
-            className={`mt-2 px-4 py-3 rounded-sm border-3 flex gap-4 w-fit ${
+            className={`mt-2 px-4 py-3 rounded-sm border-3 flex gap-4 w-fit transition-colors ${
               !isEditable
                 ? "bg-neutral-light200 border-neutral-light100"
                 : disputeConsent === null
-                ? "border-green"
-                : "border-neutral-gray"
+                ? "border-green bg-white"
+                : "border-neutral-gray bg-white"
             }`}
           >
             {["agree", "disagree"].map((option) => (
@@ -159,11 +158,11 @@ const SpecialTerms = ({
                   value={option}
                   checked={disputeConsent === option}
                   onChange={() =>{
-                    isEditable
-                    setDisputeConsent(option as "agree" | "disagree")
-                    setDisputeResolution(option == "agree");
-                  }
-                  }
+                    if(isEditable) {
+                      setDisputeConsent(option as "agree" | "disagree");
+                      setDisputeResolution(option === "agree");
+                    }
+                  }}
                   disabled={!isEditable}
                   className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
                 />
@@ -173,92 +172,97 @@ const SpecialTerms = ({
           </div>
         </li>
 
+        {/* 2. 주택 철거 또는 재건축 */}
         <li>
           • 주택의 철거 또는 재건축에 대한 계획
           <div
-            className={`mt-2 px-4 py-3 rounded-sm border-3 flex gap-4 flex-wrap items-center w-fit ${
+            className={`mt-2 px-4 py-3 rounded-sm border-3 flex flex-col gap-3 w-fit transition-colors ${
               !isEditable
                 ? "bg-neutral-light200 border-neutral-light100"
                 : rebuildPlan === null
-                ? "border-green"
-                : "border-neutral-gray"
+                ? "border-green bg-white"
+                : "border-neutral-gray bg-white"
             }`}
           >
-            {["none", "exist"].map((option) => (
-              <label
-                key={option}
-                className={`flex items-center gap-2 text-sm font-bold ${
-                  isEditable ? "cursor-pointer" : "cursor-not-allowed"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="rebuildPlan"
-                  value={option}
-                  checked={rebuildPlan === option}
-                  onChange={() =>{
-                    isEditable && setRebuildPlan(option as "none" | "exist")
-                    setIsHousingReconstructionPlanned(option == "exist")
+            <label className={`flex items-center gap-2 text-sm font-bold ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}>
+              <input
+                type="radio"
+                name="rebuildPlan"
+                value="none"
+                checked={rebuildPlan === "none"}
+                onChange={() => {
+                  if(isEditable) {
+                    setRebuildPlan("none");
+                    setIsHousingReconstructionPlanned(false);
                   }
+                }}
+                disabled={!isEditable}
+                className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
+              />
+              없음
+            </label>
+
+            <label className={`flex items-center gap-2 text-sm font-bold ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}>
+              <input
+                type="radio"
+                name="rebuildPlan"
+                value="exist"
+                checked={rebuildPlan === "exist"}
+                onChange={() => {
+                  if(isEditable) {
+                    setRebuildPlan("exist");
+                    setIsHousingReconstructionPlanned(true);
                   }
-                  disabled={!isEditable}
-                  className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
+                }}
+                disabled={!isEditable}
+                className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
+              />
+              있음 (공사시기:
+              {/* 🚀 '있음'이 선택되었을 때만 Editable을 그려주고, 비어있으면 초록색 테두리로 강조! */}
+              {isEditable && rebuildPlan === "exist" ? (
+                <EditableInputBox
+                  value={constructionPeriod}
+                  onChange={handlePeriod}
+                  placeholder="예: 2025.06"
+                  customWidth={`w-[120px] mx-1 transition-colors ${!constructionPeriod ? "border-2 border-green ring-1 ring-green" : ""}`}
                 />
-                {option === "none" ? (
-                  "없음"
-                ) : (
-                  <>
-                    있음 (공사시기:
-                    {isEditable ? (
-                      <EditableInputBox
-                        value={constructionPeriod}
-                        onChange={
-                          handlePeriod
-                        }
-                        placeholder="예: 2025.06"
-                        customWidth="w-[120px] mx-1"
-                        disabled={!isEditable}
-                      />
-                    ) : (
-                      <DisabledInputBox
-                        value={constructionPeriod}
-                        placeholder="예: 2025.06"
-                        customWidth="w-[120px] mx-1"
-                      />
-                    )}
-                    , 소요기간:
-                    {isEditable ? (
-                      <EditableInputBox
-                        value={constructionDuration}
-                        onChange={handleDuration}
-                        placeholder="개월"
-                        customWidth="w-[80px] mx-1"
-                        disabled={!isEditable}
-                      />
-                    ) : (
-                      <DisabledInputBox
-                        value={constructionDuration}
-                        placeholder="개월"
-                        customWidth="w-[80px] mx-1"
-                      />
-                    )}
-                    )
-                  </>
-                )}
-              </label>
-            ))}
+              ) : (
+                <DisabledInputBox
+                  value={constructionPeriod}
+                  placeholder="예: 2025.06"
+                  customWidth="w-[120px] mx-1"
+                />
+              )}
+              , 소요기간:
+              {isEditable && rebuildPlan === "exist" ? (
+                <EditableInputBox
+                  value={constructionDuration}
+                  onChange={handleDuration}
+                  placeholder="개월"
+                  customWidth={`w-[80px] mx-1 transition-colors ${!constructionDuration ? "border-2 border-green ring-1 ring-green" : ""}`}
+                />
+              ) : (
+                <DisabledInputBox
+                  value={constructionDuration}
+                  placeholder="개월"
+                  customWidth="w-[80px] mx-1"
+                />
+              )}
+              )
+            </label>
           </div>
         </li>
 
+        {/* 3. 상세주소가 없는 경우 */}
         <li>
           • 상세주소가 없는 경우 소유자의 동의 여부
           <div
-            className={`mt-2 px-4 py-3 rounded-sm border-3 flex gap-4 w-fit ${
+            className={`mt-2 px-4 py-3 rounded-sm border-3 flex gap-4 w-fit transition-colors ${
               !isEditable
                 ? "bg-neutral-light200 border-neutral-light100"
                 : ownerConsent === null
-                ? "border-green"
-                : "border-neutral-gray"
+                ? "border-green bg-white"
+                : "border-neutral-gray bg-white"
             }`}
           >
             {["agree", "disagree"].map((option) => (
@@ -274,11 +278,11 @@ const SpecialTerms = ({
                   value={option}
                   checked={ownerConsent === option}
                   onChange={() => {
-                    isEditable &&
-                    setOwnerConsent(option as "agree" | "disagree")
-                    setIsDetailedAddressConsentGiven(option == "agree")
-                  }
-                  }
+                    if(isEditable) {
+                      setOwnerConsent(option as "agree" | "disagree");
+                      setIsDetailedAddressConsentGiven(option === "agree");
+                    }
+                  }}
                   disabled={!isEditable}
                   className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
                 />
@@ -288,6 +292,7 @@ const SpecialTerms = ({
           </div>
         </li>
 
+        {/* 자율 특약 추가 (기존 로직 유지) */}
         {customTerms.map((term, idx) => (
           <li key={idx} className="relative pr-10">
             <p className="whitespace-pre-wrap break-words pr-2">• {term}</p>
@@ -325,7 +330,7 @@ const SpecialTerms = ({
             variant="default"
             onClick={() => setIsAdding(true)}
           >
-            추가하기
+            특약 사항 추가하기
           </Button>
         </div>
       )}
