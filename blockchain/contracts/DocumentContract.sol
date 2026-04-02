@@ -58,7 +58,7 @@ contract DocumentContract {
         uint64 _tenant
     ) external onlyOwner {
         require(contracts[_id].landlord == 0, "Contract ID exists");
-        require(!isCID(_ipfsHash), "Invalid IPFS CID");
+        require(isCID(_ipfsHash), "Invalid IPFS CID");
 
         contracts[_id] = Contract(_ipfsHash, _landlord, _tenant);
         emit ContractCreated(_id, _ipfsHash, _landlord, _tenant);
