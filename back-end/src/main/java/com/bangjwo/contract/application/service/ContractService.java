@@ -116,7 +116,14 @@ public class ContractService {
 		return contract;
 	}
 
+	@Transactional
 	public Long createContract(CreateContractRequestDto requestDto, Long memberId) {
+		Optional<Contract> existingContract = contractRepository.findByRoom_RoomId(requestDto.getRoomId());
+
+		if (existingContract.isPresent()) {
+			return existingContract.get().getContractId();
+		}
+
 		Room room = roomService.findRoom(requestDto.getRoomId());
 		Contract contract = ContractConverter.convert(room, requestDto, memberId);
 		Contract saved = contractRepository.save(contract);
