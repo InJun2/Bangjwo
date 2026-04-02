@@ -70,13 +70,6 @@ const SellerContractPage = () => {
       return;
     }
 
-    console.log(data.contractWrittenDate);
-    console.log(data.leaseStartDate);
-    console.log(data.leaseEndDate);
-    console.log(data.moveInRegistrationDate);
-    console.log(data.contractType);
-    console.log(data.monthlyRentType);
-
     if (
       !data.contractWrittenDate ||
       !data.leaseStartDate ||
@@ -85,13 +78,8 @@ const SellerContractPage = () => {
       !data.contractType ||
       !data.monthlyRentType
     ) {
-      // alert(
-      //   "필수 입력값이 누락되었습니다.\n날짜와 계약 유형을 모두 입력해주세요."
-      // );
-      // console.log("ref check", contractRef.current?.getFormData());
-      // console.log("🚀 서버에 보낼 데이터", data);
-      alert("계약서 등록이 완료되었습니다!");
-        navigate('/');
+
+      alert("필수 입력값이 누락되었습니다.\n날짜와 계약 유형(월세/전세 등)을 모두 입력해주세요.");
       return;
     }
 
@@ -103,11 +91,12 @@ const SellerContractPage = () => {
     finalizeContract(dataWithId, {
       onSuccess: () => {
         alert("계약서 등록이 완료되었습니다!");
-        console.log("🚀 서버에 보낼 데이터", dataWithId);
-      },
-      onError: () => {
-        alert("계약서 등록이 완료되었습니다!");
+        console.log("🚀 서버에 보낸 데이터", dataWithId);
         navigate('/');
+      },
+      onError: (error) => {
+        alert("계약서 등록 중 오류가 발생했습니다.");
+        console.error(error);
       },
     });
   };

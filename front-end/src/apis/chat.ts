@@ -1,5 +1,7 @@
 // apis/chat.ts
 import axiosInstance from "../utils/axiosInstances";
+import { useQueryClient } from "@tanstack/react-query";
+
 import {
   CreateChatRoomRequest,
   CreateChatRoomResponse,

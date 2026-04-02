@@ -86,13 +86,13 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
   };
 
   const handleAsk = () => {
-    if (!room || !user) return; //임시 타입 해결
-    fetchCreateChatRoom({
+    if (!room || !user) return; 
+
+    createChatMutation.mutate({
       landlordId: room.memberId,
       roomId: room.roomId,
       tenantId: Number(user.sub),
     });
-    openChatWindow();
   };
 
   // 그 다음 useQuery 훅 호출
@@ -124,6 +124,18 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
       console.error("삭제 실패:", err);
       alert("매물 삭제에 실패했습니다. 권한을 확인해주세요.");
     },
+  });
+
+  const createChatMutation = useMutation({
+    mutationFn: (data: any) => fetchCreateChatRoom(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chatRooms"] }); 
+      openChatWindow(); 
+    },
+    onError: (err) => {
+      console.error("채팅방 생성 실패:", err);
+      alert("채팅방 생성에 실패했습니다.");
+    }
   });
 
   // [삭제] 삭제 버튼 클릭 핸들러

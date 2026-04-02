@@ -1,4 +1,3 @@
-// ChatRoom.tsx
 import React, { useEffect, useRef, useState } from "react";
 import ChatHeader from "./ChatHeader";
 import ChatBubble from "./ChatBubble";
@@ -9,8 +8,9 @@ import ContractActionButton from "./ContractActionButton";
 import { connectSocket } from "../../../utils/chatSocket";
 import { useChatStore } from "../../../store/chatStore";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useCreateContract } from "../../../apis/contract";
+import { useQueryClient } from "@tanstack/react-query";
 
-// ChatRoom은 실시간 메시지와 API로 받아온 메시지를 모두 관리합니다.
 interface ChatRoomProps {
   chatId: number | null;
 }
@@ -18,16 +18,16 @@ interface ChatRoomProps {
 const ChatRoom = ({ chatId }: ChatRoomProps) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showContractButton, setShowContractButton] = useState(false);
-  const { chatRoom } = useChatStore();
+  const { chatRoom, setChatRoom } = useChatStore();
   const { user } = useAuth();
+  
+  const createContractMutation = useCreateContract();
+  const queryClient = useQueryClient();
 
   const myId = Number(user?.sub);
 
-  // ④ 소켓 연결: ChatRoom 컴포넌트에서 채팅방 ID가 있을 때 소켓 연결하고 실시간 메시지를 반영
-  // connectSocket은 [소켓메시지배열, sendMessage 함수]를 반환합니다.
   const [messages, sendSocketMessage] = connectSocket(chatId, scrollRef);
 
-  // ③ 새로운 메시지가 추가되면 스크롤을 최신 메시지 위치로 이동
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
@@ -46,14 +46,60 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
     ? `월세 ${chatRoom.deposit}/${chatRoom.monthly}`
     : "월세";
 
+  const handleOpenContract = (mode: "seller" | "buyer") => {
+    if (chatId === null || !chatRoom?.roomId) return;
+
+    const currentContractId = chatRoom.contractId || 0;
+
+    if (currentContractId > 0) {
+      window.open(`/${mode}-contract/${chatRoom.roomId}/${currentContractId}`, "_blank", "noopener,noreferrer");
+      setShowContractButton(false);
+      return;
+    }
+
+    if (currentContractId === 0) {
+      if (mode === "buyer") {
+        alert("임대인이 먼저 계약서를 작성(생성)해야 합니다. 임대인에게 요청해주세요!");
+        setShowContractButton(false);
+        return; 
+      }
+
+      // 3. 임대인(seller)일 경우 백엔드에 생성 요청!
+      createContractMutation.mutate(
+        { 
+          roomId: chatRoom.roomId,
+          tenantId: chatRoom.otherId // 🚀 핵심 추가: 상대방(임차인)의 ID를 같이 보냅니다!
+        } as any, 
+        {
+          onSuccess: (newContractId) => {
+            console.log("새로운 계약서 생성 완료! 발급된 ID:", newContractId);
+
+            queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
+            
+            setChatRoom({ 
+              ...chatRoom, 
+              contractId: newContractId 
+            });
+
+            window.open(`/${mode}-contract/${chatRoom.roomId}/${newContractId}`, "_blank", "noopener,noreferrer");
+            setShowContractButton(false);
+          },
+          onError: (error) => {
+            alert("계약서 생성에 실패했습니다. (권한 없음 등)");
+            console.error("계약서 생성 에러:", error);
+          }
+        }
+      );
+    }
+  };
+
   // 메시지와 날짜 배지를 함께 렌더링하는 함수
   const renderMessagesWithDateBadge = () => {
     const result: React.ReactNode[] = [];
     let lastDate: string | null = null;
 
-    Array.isArray(messages) &&
+    if (Array.isArray(messages)) {
       messages.forEach((msg, index) => {
-        console.log(myId, msg.senderId);
         if (msg.sendAt.slice(0, 10) !== lastDate) {
           result.push(
             <div key={`date-${index}`} className="flex justify-center my-2">
@@ -75,16 +121,12 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
               time={msg.sendAt.slice(11, 16)}
               key={index}
               {...msg}
-              // type={
-              //   ["sent", "system", "received"].includes(msg.type)
-              //     ? (msg.type as "sent" | "system" | "received")
-              //     : "received"
-              // }
-              type={myId == msg.senderId ? "sent" : "received"}
+              type={myId === msg.senderId ? "sent" : "received"}
             />
           );
         }
       });
+    }
 
     return result;
   };
@@ -107,21 +149,13 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
         {showContractButton && (
           <ContractActionButton
             text="[임대인] 계약서 작성하기"
-            onClick={() => {
-              if (chatId === null) return;
-              window.open(`/seller-contract`, "_blank", "noopener,noreferrer");
-              setShowContractButton(false);
-            }}
+            onClick={() => handleOpenContract("seller")} // 👈 수정됨
           />
         )}
         {showContractButton && (
           <ContractActionButton
             text="[임차인] 계약서 작성하기"
-            onClick={() => {
-              if (chatId === null) return;
-              window.open(`/buyer-contract`, "_blank", "noopener,noreferrer");
-              setShowContractButton(false);
-            }}
+            onClick={() => handleOpenContract("buyer")} // 👈 수정됨
           />
         )}
       </div>

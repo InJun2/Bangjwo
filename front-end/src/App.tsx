@@ -119,8 +119,8 @@ function App() {
           </Route>
           <Route path="/test" element={<PageTest />} />
           <Route path="/test/button" element={<PageTestButton />} />
-          <Route path="/seller-contract" element={<SellerContractPage />} />
-          <Route path="/buyer-contract" element={<BuyerContractPage />} />
+          <Route path="/seller-contract/:roomId/:contractId" element={<SellerContractPage />} />
+          <Route path="/buyer-contract/:roomId/:contractId" element={<BuyerContractPage />} />
           <Route path="/chat" element={<ChatPageOnly />} />
           <Route
             path="/chatbot-notice"
