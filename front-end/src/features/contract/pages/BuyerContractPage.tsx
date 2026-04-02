@@ -7,12 +7,14 @@ import { useFinalizeTenantContract } from "../../../apis/contract";
 import { UpdateLandlordInfoDto } from "../data/contract.dto";
 import ChatbotNoticePage from "../../chatbot/pages/ChatbotNoticePage";
 import ChatbotPage from "../../chatbot/pages/ChatbotPage";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const BuyerContractPage = () => {
   const contractRef = useRef<ContractRefType>(null);
   const navigate = useNavigate();
   const [agreed, setAgreed] = useState(false);
+
+  const { contractId } = useParams();
 
   const { mutate: finalizeContract, isPending: isFinalizing } =
     useFinalizeTenantContract();
@@ -27,7 +29,7 @@ const BuyerContractPage = () => {
 
     const dataWithId = {
       ...data,
-      contractId: 1,
+      contractId: Number(contractId),
     };
 
     finalizeContract(dataWithId, {
@@ -67,7 +69,7 @@ const BuyerContractPage = () => {
             </NoticeDefault>
           </div>
 
-          <Contract mode="lessee" ref={contractRef} />
+          <Contract mode="lessee" ref={contractRef} contractId={Number(contractId)} />
 
           <div className="flex justify-center gap-6 pt-8 pb-16">
             <Button

@@ -80,6 +80,7 @@ export interface CreateChatRoomRequest {
 export interface ChatRoomSummary {
     chatRoomId: number;
     roomId: number;
+    contractId?: number;
     lastMessage: string;
     profileImage: string;
     nickname: string;

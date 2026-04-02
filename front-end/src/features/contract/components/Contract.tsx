@@ -135,32 +135,76 @@ const Contract = forwardRef<ContractRefType, ContractProps>(({ mode, roomData, c
   const [receiptSignature, setReceiptSignature] = useState<string | null>(null);
 
   useEffect(() => {
-      if (roomData) {
-        setRentalPropertyAddress(roomData.address || "");
-        setRentalPartAddress(roomData.addressDetail || "");
-        setDepositAmount(roomData.deposit || "");
-        setMonthlyRent(roomData.monthlyRent || "");
-        setFixedManagementFee(roomData.maintenanceCost || "");
-        
-        if (roomData.deposit) {
-          setContractFee(roomData.deposit * 0.1); 
+    const fetchContractData = async () => {
+      try {
+        let url = "";
+        if (contractId) {
+          url = `/api/v1/contract/detail?contractId=${contractId}`;
+        } else if (roomData && (roomData as any).roomId) {
+          url = `/api/v1/room/${(roomData as any).roomId}`;
+        } else {
+          throw new Error("조회할 ID가 없습니다.");
         }
 
-        if (roomData.availableFrom) {
-          setLeaseStartDate(new Date(roomData.availableFrom).toISOString());
-        }
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+
+        if (!response.ok) throw new Error("기존 계약서 없음");
+
+        const data = await response.json();
+
+        setRentalPropertyAddress(data.rentalPropertyAddress || "");
+        setRentalPartAddress(data.rentalPartAddress || "");
+        setDepositAmount(data.depositAmount ?? "");
+        setMonthlyRent(data.monthlyRent ?? "");
+        setFixedManagementFee(data.fixedManagementFee ?? "");
+        setContractFee(data.contractFee ?? "");
+        setMiddleFee(data.middleFee ?? "");
+        setBalance(data.balance ?? "");
+        setMonthlyRentType(data.monthlyRentType || null);
+        setMonthlyRentAccountNumber(data.monthlyRentAccountNumber || "");
+        setMonthlyRentAccountBank(data.monthlyRentAccountBank || "");
+        setLeaseStartDate(data.leaseStartDate || null);
+        setLeaseEndDate(data.leaseEndDate || null);
+        setInterimPaymentDate(data.interimPaymentDate || "");
+        setBalancePaymentDate(data.balancePaymentDate || "");
+        setFacilitiesRepairContent(data.facilitiesRepairContent || "");
+        setUnfixedManagementFee(data.unfixedManagementFee || "");
+        setLandlordBurden(data.landlordBurden || "");
+        setTenantBurden(data.tenantBurden || "");
+
+      } catch (error) {
+        console.log("기존 계약서가 없으므로 매물 정보로 초기화합니다.");
         
-        if (roomData.exclusiveArea) {
-          setRentalPartArea(roomData.exclusiveArea.toString());
+        if (roomData) {
+          setRentalPropertyAddress(roomData.address || "");
+          setRentalPartAddress(roomData.addressDetail || "");
+          setDepositAmount(roomData.deposit || "");
+          setMonthlyRent(roomData.monthlyRent || "");
+          setFixedManagementFee(roomData.maintenanceCost || "");
+          
+          if (roomData.deposit) {
+            setContractFee(roomData.deposit * 0.1); 
+          }
+          if (roomData.availableFrom) {
+            setLeaseStartDate(new Date(roomData.availableFrom).toISOString());
+          }
+          if (roomData.exclusiveArea) {
+            setRentalPartArea(roomData.exclusiveArea.toString());
+          }
+        } else {
+          setRentalPropertyAddress("");
+          setRentalPartAddress("");
+          setDepositAmount("");
+          setMonthlyRent("");
+          setFixedManagementFee("");
         }
-      } else {
-        setRentalPropertyAddress("");
-        setRentalPartAddress("");
-        setDepositAmount("");
-        setMonthlyRent("");
-        setFixedManagementFee("");
       }
-    }, [roomData]);
+    };
+
+    fetchContractData();
+  }, [roomData, contractId]);
 
   const openSignatureModal = (type: "unpaid" | "priority" | "receipt") => {
     if (type === "unpaid" || type === "priority" || type === "receipt") {
