@@ -5,16 +5,8 @@ import NoticeGray from "../../../components/notices/NoticeGray";
 import DatePickerInput from "./DatePickerInput";
 import { MonthlyRentType } from "../data/contract.dto";
 
-interface RoomDetailData {
-  deposit?: number;
-  monthlyRent?: number;
-  maintenanceCost?: number;
-  availableFrom?: string; // "YYYY-MM-DD"
-}
-
 interface ContractBodyProps {
   mode: "lessor" | "lessee";
-  // 🚀 숫자 또는 빈칸("")을 모두 받을 수 있도록 타입 확장
   deposit: number | "";
   setDeposit: (value: number | "") => void;
   contractFee: number | "";
@@ -33,8 +25,8 @@ interface ContractBodyProps {
   setMiddlePaymentDate: (date: Date | null) => void;
   balancePaymentDate: Date | null;
   setBalancePaymentDate: (date: Date | null) => void;
-  monthlyRentPaymentDate: String | null;
-  setMonthlyRentPaymentDate: (date: String | null) => void;
+  monthlyRentPaymentDate: string | null;
+  setMonthlyRentPaymentDate: (date: string | null) => void;
   monthlyRentAccountBank: string;
   setMonthlyRentAccountBank: (value: string) => void;
   monthlyRentAccountNumber: string;
@@ -63,14 +55,10 @@ interface ContractBodyProps {
   setLandlordBurden: (value: string) => void;
   tenantBurden: string;
   setTenantBurden: (value: string) => void;
-  roomData?: RoomDetailData;
-  savedContractData?: any;
 }
 
 const ContractBody = ({
   mode,
-  roomData,
-  savedContractData,
   deposit,
   setDeposit,
   contractFee,
@@ -79,6 +67,7 @@ const ContractBody = ({
   setMonthlyRent,
   receiptSignature,
   openSignatureModal,
+  monthlyRentType,
   setPaymentMethod,
   middleFee,
   setMiddleFee,
@@ -88,6 +77,7 @@ const ContractBody = ({
   setMiddlePaymentDate,
   balancePaymentDate,
   setBalancePaymentDate,
+  monthlyRentPaymentDate,
   setMonthlyRentPaymentDate,
   monthlyRentAccountBank,
   setMonthlyRentAccountBank,
@@ -101,41 +91,24 @@ const ContractBody = ({
   setLeaseStartDate,
   leaseEndDate,
   setLeaseEndDate,
+  facilitiesRepairStatus,
   setFacilitiesRepairStatus,
+  facilitiesRepairContent,
   setFacilitiesRepairContent,
+  repairCompletionByBalanceDate,
   setRepairCompletionByBalanceDate,
+  repairCompletionEtc,
   setRepairCompletionEtc,
+  notRepairedByBalanceDate,
   setNotRepairedByBalanceDate,
+  notRepairedEtc,
   setNotRepairedEtc,
+  landlordBurden,
   setLandlordBurden,
   tenantBurden,
   setTenantBurden,
 }: ContractBodyProps) => {
   const isEditable = mode === "lessor";
-
-  useEffect(() => {
-    if (savedContractData) {
-      setDeposit(savedContractData.depositAmount ?? "");
-      setContractFee(savedContractData.contractFee ?? "");
-      return;
-    }
-
-    if (roomData) {
-      setDeposit(roomData.deposit ?? "");
-      setMonthlyRent(roomData.monthlyRent ?? "");
-      setFixedManagementFee(roomData.maintenanceCost ?? "");
-      if (roomData.availableFrom) setLeaseStartDate(new Date(roomData.availableFrom));
-      
-      if (roomData.deposit) {
-        setContractFee(roomData.deposit * 0.1); 
-      }
-    } else {
-      // roomData가 없으면 빈칸 유지
-      setDeposit("");
-      setMonthlyRent("");
-      setFixedManagementFee("");
-    }
-  }, [roomData, savedContractData]);
 
   const [monthlyRentDay, setMonthlyRentDay] = useState("");
 
@@ -153,7 +126,46 @@ const ContractBody = ({
   const [showLessorNotice, setShowLessorNotice] = useState(false);
   const [showLesseeNotice, setShowLesseeNotice] = useState(false);
 
-  const [payType, setPayType] = useState("선불");
+  useEffect(() => {
+    if (monthlyRentPaymentDate) setMonthlyRentDay(monthlyRentPaymentDate);
+
+    if (facilitiesRepairStatus === true) {
+      setRepairFacility("needed");
+      setRepairDetail(facilitiesRepairContent || "");
+    } else if (facilitiesRepairStatus === false) {
+      setRepairFacility("none");
+    }
+
+    if (repairCompletionByBalanceDate) {
+      setCompletionOption("balance-day");
+      setRepairCompletionDate(repairCompletionByBalanceDate);
+    } else if (repairCompletionEtc) {
+      setCompletionOption("custom");
+      setRepairCustomEtc(repairCompletionEtc);
+    }
+
+    if (notRepairedByBalanceDate) {
+      setUnrepairedOption("balance-day");
+      setUnrepairedDeadline(notRepairedByBalanceDate);
+    } else if (notRepairedEtc) {
+      setUnrepairedOption("custom");
+      setUnrepairedCustomEtc(notRepairedEtc);
+    }
+
+    if (landlordBurden) setLessorDuty(landlordBurden);
+    if (tenantBurden) setLesseeDuty(tenantBurden);
+
+  }, [
+    monthlyRentPaymentDate,
+    facilitiesRepairStatus,
+    facilitiesRepairContent,
+    repairCompletionByBalanceDate,
+    repairCompletionEtc,
+    notRepairedByBalanceDate,
+    notRepairedEtc,
+    landlordBurden,
+    tenantBurden,
+  ]);
 
   const handleMonthlyRentDay = (value: string) => {
     setMonthlyRentDay(value);
@@ -193,11 +205,6 @@ const ContractBody = ({
   const handleLesseeBurden = (value: string) => {
     setTenantBurden(value);
     setLesseeDuty(value);
-  };
-
-  const handlePayMethod = (value: string) => {
-    setPaymentMethod(value == "선불" ? "PREPAID" : "POSTPAID");
-    setPayType(value);
   };
 
   return (
@@ -276,14 +283,17 @@ const ContractBody = ({
 
         <div className="flex items-center gap-2">
           <span className="w-24 text-base font-medium">영수자</span>
+
           <div
             onClick={() => isEditable && openSignatureModal("receipt")}
-            className={`w-[100px] h-[32px] border-2 border-neutral-light100 bg-neutral-light200 ${
-              isEditable ? "cursor-pointer" : "cursor-not-allowed"
-            }`}
+            className={`w-[100px] h-[32px] border-2 flex items-center justify-center ${
+              isEditable && !receiptSignature
+                ? "border-green bg-green/10" 
+                : "border-neutral-light100 bg-neutral-light200"
+            } ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}
           >
             {receiptSignature ? (
-              <img src={receiptSignature} alt="서명" />
+              <img src={receiptSignature} alt="서명" className="h-full object-contain" />
             ) : null}
           </div>
           <span className="text-sm font-medium">(인)</span>
@@ -364,16 +374,22 @@ const ContractBody = ({
           />
         )}
         <span className="text-sm font-medium">일</span>
+        
         {isEditable ? (
-          <EditableInputBox
-            value={payType}
-            onChange={handlePayMethod}
-            placeholder="선불/후불"
-            customWidth="w-[100px]"
-          />
+          <select
+            value={monthlyRentType || ""}
+            onChange={(e) => setPaymentMethod(e.target.value as MonthlyRentType)}
+            className={`w-[100px] h-[32px] px-2 border-2 rounded-sm outline-none transition-colors cursor-pointer ${
+              monthlyRentType === null ? "border-green bg-white text-neutral-gray" : "border-neutral-dark200 bg-white"
+            }`}
+          >
+            <option value="" disabled hidden>선택</option>
+            <option value="PREPAID">선불</option>
+            <option value="POSTPAID">후불</option>
+          </select>
         ) : (
           <DisabledInputBox
-            value={payType}
+            value={monthlyRentType === "PREPAID" ? "선불" : monthlyRentType === "POSTPAID" ? "후불" : ""}
             placeholder="선불/후불"
             customWidth="w-[100px]"
           />

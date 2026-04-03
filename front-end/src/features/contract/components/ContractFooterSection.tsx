@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import EditableInputBox from "./EditableInputBox";
 import DisabledInputBox from "./DisabledInputBox";
 import NoticeGray from "../../../components/notices/NoticeGray";
@@ -35,8 +35,13 @@ const ContractFooterSection = ({
   const isLessor = mode === "lessor";
   const isLessee = mode === "lessee";
 
-  const selectedDate = contractWrittenDate ? new Date(contractWrittenDate) : null;
-  
+  const selectedDate = contractWrittenDate
+    ? new Date(contractWrittenDate)
+    : null;
+
+  const [showLessorSignatureHelp, setShowLessorSignatureHelp] = useState(false);
+  const [showLesseeSignatureHelp, setShowLesseeSignatureHelp] = useState(false);
+
   const handleChange = (
     role: "lessor" | "lessee",
     key: keyof FooterInfo,
@@ -66,11 +71,12 @@ const ContractFooterSection = ({
   ) => {
     const editable =
       (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
-    const value = footerInfo[role][key];
+      
+    const value = footerInfo[role][key] || "";
 
     if (key === "address") {
       return (
-        <div 
+        <div
           onClick={() => editable && handleAddressSearch(role)}
           className={editable ? "cursor-pointer w-full" : "w-full"}
         >
@@ -108,7 +114,7 @@ const ContractFooterSection = ({
         customWidth={customWidth}
       />
     );
-    };
+  };
 
   return (
     <div className="mt-10 text-base leading-relaxed">
@@ -124,7 +130,11 @@ const ContractFooterSection = ({
           <div className={isLessor ? "w-[220px]" : "cursor-not-allowed"}>
             <DatePickerInput
               selectedDate={selectedDate}
-              onChange={(date) => setContractWrittenDate(date ? date.toISOString().split('T')[0] : "")}
+              onChange={(date) =>
+                setContractWrittenDate(
+                  date ? date.toISOString().split("T")[0] : ""
+                )
+              }
               placeholder="계약 날짜 선택"
               disabled={!isLessor}
             />
@@ -134,29 +144,54 @@ const ContractFooterSection = ({
 
       {/* 임대인, 임차인 정보 입력 */}
       {["lessor", "lessee"].map((roleKey) => {
-        const [showSignatureHelp, setShowSignatureHelp] = useState(false);
         const role = roleKey as "lessor" | "lessee";
         const label = role === "lessor" ? "임대인" : "임차인";
-        const editable = (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
+        const editable =
+          (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
+        
+        const showSignatureHelp = role === "lessor" ? showLessorSignatureHelp : showLesseeSignatureHelp;
+        const setShowSignatureHelp = role === "lessor" ? setShowLessorSignatureHelp : setShowLesseeSignatureHelp;
 
         return (
-          <div key={role} className="mt-10 p-6 rounded-lg bg-neutral-light100/30 border border-neutral-light200">
+          <div
+            key={role}
+            className="mt-10 p-6 rounded-lg bg-neutral-light100/30 border border-neutral-light200"
+          >
             <div className="flex items-center gap-14 mb-6">
-              <span className="w-[60px] font-extrabold text-lg text-neutral-black">{label}</span>
+              <span className="w-[60px] font-extrabold text-lg text-neutral-black">
+                {label}
+              </span>
               <div className="flex items-center gap-4 w-full">
                 <span className="w-[100px] font-medium">주소</span>
-                {renderInputBox(role, "address", "클릭하여 주소 검색", "w-full")}
+                {renderInputBox(
+                  role,
+                  "address",
+                  "클릭하여 주소 검색",
+                  "w-full"
+                )}
               </div>
             </div>
-            
+
             <div className="ml-[114px] flex flex-col gap-5">
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">주민등록번호</span>
-                {renderInputBox(role, "ssn", "000000-0000000", "w-[300px]", 14)}
+                {renderInputBox(
+                  role,
+                  "ssn",
+                  "000000-0000000",
+                  "w-[300px]",
+                  14
+                )}
               </div>
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">전화</span>
-                {renderInputBox(role, "phone", "010-0000-0000", "w-[300px]", 13)}
+                {renderInputBox(
+                  role,
+                  "phone",
+                  "010-0000-0000",
+                  "w-[300px]",
+                  13
+                )}
               </div>
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">성명</span>
@@ -176,7 +211,9 @@ const ContractFooterSection = ({
                       <span
                         className="material-symbols-rounded text-neutral-dark200"
                         style={{
-                          fontVariationSettings: `'FILL' ${showSignatureHelp ? 1 : 0}, 'wght' 400, 'GRAD' 0, 'opsz' 24`,
+                          fontVariationSettings: `'FILL' ${
+                            showSignatureHelp ? 1 : 0
+                          }, 'wght' 400, 'GRAD' 0, 'opsz' 24`,
                           fontSize: "20px",
                         }}
                       >
