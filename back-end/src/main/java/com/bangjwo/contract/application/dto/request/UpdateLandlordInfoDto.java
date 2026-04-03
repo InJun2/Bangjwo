@@ -4,7 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.bangjwo.contract.application.dto.validation.FinalSave;
+import com.bangjwo.contract.application.validation.NotEmptyMultipartFile;
 import com.bangjwo.contract.domain.vo.MonthlyRentType;
 import com.bangjwo.room.domain.vo.ContractType;
 import com.bangjwo.room.domain.vo.LeaseType;
@@ -242,4 +245,15 @@ public class UpdateLandlordInfoDto {
 	@NotNull(groups = FinalSave.class)
 	private String name;
 
+	@Schema(description = "미납 국세,지방세 없음 동의 서명 URL", format = "binary", example = "data:image/png...")
+	@NotEmptyMultipartFile(groups = FinalSave.class)
+	private MultipartFile landlordSignatureUrl1;
+
+	@Schema(description = "선순위 확정일자 현황 해당 없음 서명 URL", format = "binary", example = "data:image/png...")
+	@NotEmptyMultipartFile(groups = FinalSave.class)
+	private MultipartFile landlordSignatureUrl2;
+
+	@Schema(description = "계약내용 영수자 서명 URL", format = "binary", example = "data:image/png...")
+	@NotEmptyMultipartFile(groups = FinalSave.class)
+	private MultipartFile landlordSignatureUrl3;
 }
