@@ -82,9 +82,9 @@ public class ContractController {
 			@ApiResponse(responseCode = "404", description = "계약서 또는 임대인 정보 없음", content = @Content)
 		}
 	)
-	@PatchMapping("/landlord")
+	@PatchMapping(value = "/landlord", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Void> draftLandlordInfo(
-		@Validated(TempSave.class) @RequestBody UpdateLandlordInfoDto requestDto, @MemberHeader Long memberId) {
+		@Validated(TempSave.class) @ModelAttribute UpdateLandlordInfoDto requestDto, @MemberHeader Long memberId) {
 		contractService.draftLandlordInfo(requestDto, memberId);
 
 		return ResponseEntity.noContent().build();
@@ -101,9 +101,9 @@ public class ContractController {
 			@ApiResponse(responseCode = "404", description = "계약서 또는 임대인 정보 없음", content = @Content)
 		}
 	)
-	@PatchMapping("/landlord/final")
+	@PatchMapping(value = "/landlord/final", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Void> finalLandlordInfo(
-		@Validated(FinalSave.class) @RequestBody UpdateLandlordInfoDto requestDto, @MemberHeader Long memberId) {
+		@Validated(FinalSave.class) @ModelAttribute UpdateLandlordInfoDto requestDto, @MemberHeader Long memberId) {
 		contractService.finalLandlordInfo(requestDto, memberId);
 
 		return ResponseEntity.noContent().build();
@@ -121,9 +121,9 @@ public class ContractController {
 			@ApiResponse(responseCode = "409", description = "동시성 제어로 인한 요청 거부", content = @Content)
 		}
 	)
-	@PatchMapping("/landlord/final/after-tenant")
+	@PatchMapping(value = "/landlord/final/after-tenant", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Void> finalLandlordAfterTenant(
-		@Validated(FinalSave.class) @RequestBody UpdateLandlordInfoDto requestDto,
+		@Validated(FinalSave.class) @ModelAttribute UpdateLandlordInfoDto requestDto,
 		@MemberHeader Long memberId) {
 		contractService.finalLandlordAfterTenant(requestDto, memberId);
 
