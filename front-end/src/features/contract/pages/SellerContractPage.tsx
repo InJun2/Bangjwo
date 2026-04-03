@@ -13,6 +13,7 @@ import { UpdateLandlordInfoDto } from "../data/contract.dto";
 import ChatbotNoticePage from "../../chatbot/pages/ChatbotNoticePage";
 import ChatbotPage from "../../chatbot/pages/ChatbotPage";
 import { useNavigate, useParams } from 'react-router-dom';
+import { dataURLtoFile } from "../../../utils/fileUtils";
 
 const SellerContractPage = () => {
   const contractRef = useRef<ContractRefType>(null);
@@ -36,34 +37,81 @@ const SellerContractPage = () => {
   const { mutate: finalizeContract, isPending: isFinalizing } =
     useFinalizeLandlordContract();
 
-  const handleTempSave = () => {
+  const createFormData = async (data: UpdateLandlordInfoDto, sigs: any, currentContractId: number) => {
+    const formData = new FormData();
+    formData.append("contractId", String(currentContractId));
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (
+        key !== "landlordSignatureUrl1" &&
+        key !== "landlordSignatureUrl2" &&
+        key !== "landlordSignatureUrl3" &&
+        key !== "contractId"
+      ) {
+        if (value !== null && value !== undefined) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => formData.append(key, String(v)));
+          } else {
+            formData.append(key, String(value));
+          }
+        }
+      }
+    });
+
+    const appendSignature = async (sigUrl: string | null | undefined, fieldName: string, fileName: string) => {
+      if (!sigUrl) return;
+      
+      if (sigUrl.startsWith("data:image/")) {
+        formData.append(fieldName, dataURLtoFile(sigUrl, fileName));
+      } else if (sigUrl.startsWith("http")) {
+        try {
+          const response = await fetch(sigUrl);
+          const blob = await response.blob();
+          formData.append(fieldName, new File([blob], fileName, { type: blob.type || "image/png" }));
+        } catch (e) {
+          console.error(`서명 파일 변환 실패 (${fieldName}):`, e);
+          alert("기존 서명 이미지를 불러오는 데 실패했습니다. 서명 칸을 다시 클릭하여 서명해주세요.");
+          throw e;
+        }
+      }
+    };
+
+    await appendSignature(sigs?.sig1, "landlordSignatureUrl1", "signature1.png");
+    await appendSignature(sigs?.sig2, "landlordSignatureUrl2", "signature2.png");
+    await appendSignature(sigs?.sig3, "landlordSignatureUrl3", "signature3.png");
+
+    return formData;
+  };
+
+  const handleTempSave = async () => {
     const data = contractRef.current?.getFormData() as UpdateLandlordInfoDto;
+    const sigs = (contractRef.current as any)?.getSignatures?.();
 
     if (!data) {
       alert("저장할 데이터가 없습니다.");
       return;
     }
 
-    const dataWithId = {
-      ...data,
-      contractId: Number(contractId),
-    };
+    try {
+      const formData = await createFormData(data, sigs, Number(contractId));
 
-    console.log(dataWithId);
-
-    saveLandlordInfo(dataWithId, {
-      onSuccess: () => {
-        alert("임시 저장 완료!");
-        console.log("🚀 서버에 보낼 데이터", dataWithId);
-      },
-      onError: () => {
-        alert("임시 저장 완료!");
-      },
-    });
+      saveLandlordInfo(formData, {
+        onSuccess: () => {
+          alert("임시 저장 및 서명 저장이 완료되었습니다!");
+        },
+        onError: (err) => {
+          alert("저장 중 오류가 발생했습니다.");
+          console.error(err);
+        },
+      });
+    } catch (error) {
+      // 서명 변환 실패 등
+    }
   };
 
-  const handleFinalize = () => {
+  const handleFinalize = async () => {
     const data = contractRef.current?.getFormData() as UpdateLandlordInfoDto;
+    const sigs = (contractRef.current as any)?.getSignatures?.();
 
     if (!data) {
       alert("제출할 데이터가 없습니다.");
@@ -71,6 +119,7 @@ const SellerContractPage = () => {
     }
 
     if (
+      !data.leaseType ||
       !data.contractWrittenDate ||
       !data.leaseStartDate ||
       !data.leaseEndDate ||
@@ -78,27 +127,31 @@ const SellerContractPage = () => {
       !data.contractType ||
       !data.monthlyRentType
     ) {
-
-      alert("필수 입력값이 누락되었습니다.\n날짜와 계약 유형(월세/전세 등)을 모두 입력해주세요.");
+      alert("필수 입력값이 누락되었습니다.\n헤더의 '임대 유형(월세/전세)' 및 날짜 등을 모두 입력해주세요.");
       return;
     }
 
-    const dataWithId = {
-      ...data,
-      contractId: Number(contractId),
-    };
+    if (!sigs?.sig1 || !sigs?.sig2 || !sigs?.sig3) {
+      alert("등록 완료 전, 임대인 서명 3개를 모두 진행해주세요.");
+      return;
+    }
 
-    finalizeContract(dataWithId, {
-      onSuccess: () => {
-        alert("계약서 등록이 완료되었습니다!");
-        console.log("🚀 서버에 보낸 데이터", dataWithId);
-        navigate('/');
-      },
-      onError: (error) => {
-        alert("계약서 등록 중 오류가 발생했습니다.");
-        console.error(error);
-      },
-    });
+    try {
+      const formData = await createFormData(data, sigs, Number(contractId));
+
+      finalizeContract(formData, {
+        onSuccess: () => {
+          alert("계약서 등록이 완료되었습니다!");
+          navigate('/');
+        },
+        onError: (error) => {
+          alert("계약서 등록 중 오류가 발생했습니다. 모든 필수 항목이 채워졌는지 확인해주세요.");
+          console.error(error);
+        },
+      });
+    } catch (error) {
+      // 에러 처리
+    }
   };
 
   return (
@@ -126,7 +179,6 @@ const SellerContractPage = () => {
             </NoticeDefault>
           </div>
 
-          {/* ✅ 계약서 폼 컴포넌트 */}
           <Contract 
             mode="lessor" 
             ref={contractRef} 
@@ -134,7 +186,6 @@ const SellerContractPage = () => {
             contractId={Number(contractId)}
           />
 
-          {/* ✅ 하단 버튼 */}
           <div className="flex justify-center gap-6 pt-8 pb-16">
             <Button
               size="medium"
