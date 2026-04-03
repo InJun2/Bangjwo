@@ -57,4 +57,7 @@ export interface UpdateLandlordInfoDto {
   residentRegistrationNumber: string;
   phoneNumber: string;
   name: string;
+  landlordSignatureUrl1: string;
+  landlordSignatureUrl2: string;
+  landlordSignatureUrl3: string;
 }
