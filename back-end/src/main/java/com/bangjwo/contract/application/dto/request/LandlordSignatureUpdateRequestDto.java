@@ -18,17 +18,7 @@ public class LandlordSignatureUpdateRequestDto {
 	@NotNull
 	private Long contractId;
 
-	@Schema(description = "서명 이미지 1", type = "string", format = "binary")
-	private MultipartFile signature1;
-
-	@Schema(description = "서명 이미지 2", type = "string", format = "binary")
-	private MultipartFile signature2;
-
-	@Schema(description = "서명 이미지 3", type = "string", format = "binary")
-	@NotEmptyMultipartFile(message = "서명 이미지 3은 필수 항목입니다.")
-	private MultipartFile signature3;
-
-	@Schema(description = "서명 이미지 4", type = "string", format = "binary")
-	@NotEmptyMultipartFile(message = "서명 이미지 4는 필수 항목입니다.")
+	@Schema(description = "최종 서명", type = "string", format = "binary")
+	@NotEmptyMultipartFile
 	private MultipartFile signature4;
 }
