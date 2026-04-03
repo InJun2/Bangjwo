@@ -40,7 +40,7 @@ public class S3FileUploaderAdapter implements FileUploaderPort {
 
 			s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
 
-			return "https://" + bucketName + ".s3." + awsRegion + ".amazonaws.com/" + key;
+			return key;
 		} catch (IOException e) {
 			throw new BusinessException(GlobalErrorCodes.FAIL_IMAGE_UPLOAD);
 		}
