@@ -324,7 +324,7 @@ const HouseInfoSection = ({
               onClick={() => !isLessee && openSignatureModal("unpaid")}
               className={`w-[100px] h-[32px] border-2 flex items-center justify-center ${
                 !isLessee && unpaidTaxOption === false && !unpaidTaxSignature
-                  ? "border-green bg-green/10" // 서명 필요 시 초록색 테두리+배경
+                  ? "border-green bg-green/10"
                   : "border-neutral-light100 bg-neutral-light200"
               } ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
@@ -371,10 +371,10 @@ const HouseInfoSection = ({
               className="w-[16px] h-[16px] border-2 border-neutral-dark200 appearance-none rounded-none checked:bg-neutral-dark200 transition-colors"
             />
             해당 없음 ( 임대인 서명
-            {/* 🚀 내부 박스: '해당 없음'을 선택했는데 서명이 없으면 초록색으로 강조! */}
+            
             <div
               onClick={() => !isLessee && openSignatureModal("priority")}
-              className={`w-[100px] h-[32px] border-2 flex items-center justify-center ${
+              className={`w-[100px] h-[32px] border-2 flex items-center justify-center transition-colors mx-1 ${
                 !isLessee && priorityDateOption === "none" && !priorityDateSignature
                   ? "border-green bg-green/10" 
                   : "border-neutral-light100 bg-neutral-light200"
