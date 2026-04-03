@@ -92,7 +92,7 @@ public class ContractController {
 
 	@Operation(
 		summary = "임대인 계약 정보 최종 저장",
-		description = "모든 필수 정보를 포함하여 계약서에 임대인 정보를 최종 저장합니다. 계약 상태가 BEFORE_WRITE 인 경우만 호출 가능합니다.",
+		description = "모든 필수 정보를 포함하여 계약서에 임대인 정보를 최종 저장합니다. 계약 상태가 BEFORE_WRITE, TENANT_COMPLETED, LANDLORD_COMPLETED 인 경우 호출 가능합니다.",
 		security = @SecurityRequirement(name = "JWT"),
 		responses = {
 			@ApiResponse(responseCode = "204", description = "최종 저장 성공"),
@@ -111,7 +111,7 @@ public class ContractController {
 
 	@Operation(
 		summary = "임차인 서명 전 임대인 수정",
-		description = "임차인 서명 전에 계약 상태가 TENANT_COMPLETED인 경우 임대인이 수정할 수 있습니다. 이 경우 동시성 방지를 위해 락이 적용됩니다.",
+		description = "임차인 서명 전에 계약 상태가 LANDLORD_COMPLETED, TENANT_COMPLETED인 경우 임대인이 수정할 수 있습니다. 이 경우 동시성 방지를 위해 락이 적용됩니다.",
 		security = @SecurityRequirement(name = "JWT"),
 		responses = {
 			@ApiResponse(responseCode = "204", description = "수정 성공"),
