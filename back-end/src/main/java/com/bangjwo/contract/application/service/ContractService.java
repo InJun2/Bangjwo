@@ -143,9 +143,7 @@ public class ContractService {
 	@Transactional
 	public void finalLandlordInfo(UpdateLandlordInfoDto requestDto, Long memberId) {
 		Contract contract = validateLandlordFinalContract(requestDto.getContractId(), memberId);
-		if (contract.getContractStatus() != ContractStatus.BEFORE_WRITE) {
-			throw new BusinessException(ContractErrorCode.INVALID_CONTRACT_STATUS_FOR_LANDLORD_UPDATE);
-		}
+
 		updateContractInfo(contract, requestDto);
 	}
 
@@ -153,9 +151,7 @@ public class ContractService {
 	@RedisLock(key = "'contract:' + #requestDto.contractId", errorCode = RedisLockErrorCode.TENANT_IN_PROGRESS)
 	public void finalLandlordAfterTenant(UpdateLandlordInfoDto requestDto, Long memberId) {
 		Contract contract = validateLandlordFinalContract(requestDto.getContractId(), memberId);
-		if (contract.getContractStatus() != ContractStatus.TENANT_COMPLETED) {
-			throw new BusinessException(ContractErrorCode.INVALID_CONTRACT_STATUS_FOR_LANDLORD_UPDATE);
-		}
+
 		updateContractInfo(contract, requestDto);
 	}
 
