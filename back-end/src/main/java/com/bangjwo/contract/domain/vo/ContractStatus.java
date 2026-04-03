@@ -31,7 +31,7 @@ public enum ContractStatus {
 	private final String description;
 
 	public boolean canLandlordFinalUpdate() {
-		return this == BEFORE_WRITE || this == TENANT_COMPLETED;
+		return this == BEFORE_WRITE || this == TENANT_COMPLETED || this == LANDLORD_COMPLETED;
 	}
 
 	public boolean canTenantFinalUpdate() {
