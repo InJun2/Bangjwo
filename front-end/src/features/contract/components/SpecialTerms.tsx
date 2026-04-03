@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EditableInputBox from "./EditableInputBox";
 import DisabledInputBox from "./DisabledInputBox";
 import Button from "../../../components/buttons/Button";
@@ -26,22 +26,28 @@ interface SpecialTermsProps {
 
 const SpecialTerms = ({
   mode,
+  moveInRegistrationDate,
   setMoveInRegistrationDate,
+  unpaidAmount,
   setUnpaidAmount,
+  disputeResolution,
   setDisputeResolution,
+  isHousingReconstructionPlanned,
   setIsHousingReconstructionPlanned,
+  constructionPeriod: parentConstructionPeriod,
   setConstructionPeriod2,
+  estimatedConstructionDuration,
   setEstimatedConstructionDuration,
+  isDetailedAddressConsentGiven,
   setIsDetailedAddressConsentGiven,
   etc,
-  setEtc
+  setEtc,
 }: SpecialTermsProps) => {
   const isEditable = mode === "lessor";
 
   const [moveInDate, setMoveInDate] = useState<Date | null>(null);
   const [taxAmount, setTaxAmount] = useState("");
-  
-  // 🚀 핵심: 초기값을 모두 null로 변경하여 처음엔 무조건 겉에 초록 테두리가 뜨게 합니다.
+
   const [disputeConsent, setDisputeConsent] = useState<"agree" | "disagree" | null>(null);
   const [rebuildPlan, setRebuildPlan] = useState<"none" | "exist" | null>(null);
   const [ownerConsent, setOwnerConsent] = useState<"agree" | "disagree" | null>(null);
@@ -52,6 +58,44 @@ const SpecialTerms = ({
   const [customTerms, setCustomTerms] = useState<string[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newTerm, setNewTerm] = useState("");
+
+  // 🚀 부모에서 넘어온 데이터를 로컬 상태(화면)에 동기화시키는 마법의 useEffect
+  useEffect(() => {
+    // 1. 인도 및 전입신고 기한
+    if (moveInRegistrationDate) setMoveInDate(moveInRegistrationDate);
+
+    // 2. 미납 체납 세금 (0원일 경우 빈칸으로)
+    if (unpaidAmount) setTaxAmount(String(unpaidAmount));
+
+    // 3. 분쟁해결 동의
+    if (disputeResolution === true) setDisputeConsent("agree");
+    else if (disputeResolution === false) setDisputeConsent("disagree");
+
+    // 4. 주택 철거/재건축 계획
+    if (isHousingReconstructionPlanned === true) {
+      setRebuildPlan("exist");
+      if (parentConstructionPeriod) setConstructionPeriod(parentConstructionPeriod);
+      if (estimatedConstructionDuration) setConstructionDuration(String(estimatedConstructionDuration));
+    } else if (isHousingReconstructionPlanned === false) {
+      setRebuildPlan("none");
+    }
+
+    // 5. 상세주소 없는 경우 소유자 동의
+    if (isDetailedAddressConsentGiven === true) setOwnerConsent("agree");
+    else if (isDetailedAddressConsentGiven === false) setOwnerConsent("disagree");
+
+    // 6. 추가 특약 (배열)
+    if (etc && etc.length > 0) setCustomTerms(etc);
+  }, [
+    moveInRegistrationDate,
+    unpaidAmount,
+    disputeResolution,
+    isHousingReconstructionPlanned,
+    parentConstructionPeriod,
+    estimatedConstructionDuration,
+    isDetailedAddressConsentGiven,
+    etc,
+  ]);
 
   const handleTax = (data: string) => {
     setTaxAmount(data);
@@ -66,7 +110,7 @@ const SpecialTerms = ({
   const handlePeriod = (data: string) => {
     setConstructionPeriod(data);
     setConstructionPeriod2(data);
-  }
+  };
 
   const handleAddNewTerm = () => {
     const trimmedTerm = newTerm.trim();
@@ -79,7 +123,9 @@ const SpecialTerms = ({
   };
 
   const handleDeleteTerm = (index: number) => {
-    setCustomTerms((prev) => prev.filter((_, i) => i !== index));
+    const newTerms = customTerms.filter((_, i) => i !== index);
+    setCustomTerms(newTerms);
+    setEtc(newTerms);
   };
 
   return (
@@ -119,7 +165,9 @@ const SpecialTerms = ({
                 value={taxAmount}
                 onChange={handleTax}
                 placeholder="50,000,000"
-                customWidth={`w-[140px] transition-colors ${!taxAmount ? "border-2 border-green ring-green" : ""}`}
+                customWidth={`w-[140px] transition-colors ${
+                  !taxAmount ? "border-2 border-green ring-green" : ""
+                }`}
               />
             ) : (
               <DisabledInputBox
@@ -157,8 +205,8 @@ const SpecialTerms = ({
                   name="disputeConsent"
                   value={option}
                   checked={disputeConsent === option}
-                  onChange={() =>{
-                    if(isEditable) {
+                  onChange={() => {
+                    if (isEditable) {
                       setDisputeConsent(option as "agree" | "disagree");
                       setDisputeResolution(option === "agree");
                     }
@@ -184,14 +232,18 @@ const SpecialTerms = ({
                 : "border-neutral-gray bg-white"
             }`}
           >
-            <label className={`flex items-center gap-2 text-sm font-bold ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}>
+            <label
+              className={`flex items-center gap-2 text-sm font-bold ${
+                isEditable ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
+            >
               <input
                 type="radio"
                 name="rebuildPlan"
                 value="none"
                 checked={rebuildPlan === "none"}
                 onChange={() => {
-                  if(isEditable) {
+                  if (isEditable) {
                     setRebuildPlan("none");
                     setIsHousingReconstructionPlanned(false);
                   }
@@ -202,14 +254,18 @@ const SpecialTerms = ({
               없음
             </label>
 
-            <label className={`flex items-center gap-2 text-sm font-bold ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}>
+            <label
+              className={`flex items-center gap-2 text-sm font-bold ${
+                isEditable ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
+            >
               <input
                 type="radio"
                 name="rebuildPlan"
                 value="exist"
                 checked={rebuildPlan === "exist"}
                 onChange={() => {
-                  if(isEditable) {
+                  if (isEditable) {
                     setRebuildPlan("exist");
                     setIsHousingReconstructionPlanned(true);
                   }
@@ -218,13 +274,14 @@ const SpecialTerms = ({
                 className="w-[16px] h-[16px] appearance-none border-2 border-neutral-dark200 bg-white checked:bg-neutral-dark200 transition-colors"
               />
               있음 (공사시기:
-              {/* 🚀 '있음'이 선택되었을 때만 Editable을 그려주고, 비어있으면 초록색 테두리로 강조! */}
               {isEditable && rebuildPlan === "exist" ? (
                 <EditableInputBox
                   value={constructionPeriod}
                   onChange={handlePeriod}
                   placeholder="예: 2025.06"
-                  customWidth={`w-[120px] mx-1 transition-colors ${!constructionPeriod ? "border-2 border-green ring-1 ring-green" : ""}`}
+                  customWidth={`w-[120px] mx-1 transition-colors ${
+                    !constructionPeriod ? "border-2 border-green ring-1 ring-green" : ""
+                  }`}
                 />
               ) : (
                 <DisabledInputBox
@@ -239,7 +296,9 @@ const SpecialTerms = ({
                   value={constructionDuration}
                   onChange={handleDuration}
                   placeholder="개월"
-                  customWidth={`w-[80px] mx-1 transition-colors ${!constructionDuration ? "border-2 border-green ring-1 ring-green" : ""}`}
+                  customWidth={`w-[80px] mx-1 transition-colors ${
+                    !constructionDuration ? "border-2 border-green ring-1 ring-green" : ""
+                  }`}
                 />
               ) : (
                 <DisabledInputBox
@@ -278,7 +337,7 @@ const SpecialTerms = ({
                   value={option}
                   checked={ownerConsent === option}
                   onChange={() => {
-                    if(isEditable) {
+                    if (isEditable) {
                       setOwnerConsent(option as "agree" | "disagree");
                       setIsDetailedAddressConsentGiven(option === "agree");
                     }
@@ -292,7 +351,7 @@ const SpecialTerms = ({
           </div>
         </li>
 
-        {/* 자율 특약 추가 (기존 로직 유지) */}
+        {/* 자율 특약 추가 */}
         {customTerms.map((term, idx) => (
           <li key={idx} className="relative pr-10">
             <p className="whitespace-pre-wrap break-words pr-2">• {term}</p>
