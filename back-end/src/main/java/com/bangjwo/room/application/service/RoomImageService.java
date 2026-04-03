@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.bangjwo.global.common.error.room.RoomErrorCode;
 import com.bangjwo.global.common.exception.BusinessException;
 import com.bangjwo.global.common.image.FileUploaderPort;
+import com.bangjwo.global.common.util.ImageUrlUtil;
 import com.bangjwo.room.domain.entity.Image;
 import com.bangjwo.room.domain.entity.Room;
 import com.bangjwo.room.domain.repository.RoomImageRepository;
@@ -41,7 +42,7 @@ public class RoomImageService {
 
 		Image image = Image.builder()
 			.room(managedRoom)
-			.imageUrl(imageUrl)
+			.imageUrl(ImageUrlUtil.getFullUrl(ImageUrlUtil.getFullUrl(imageUrl)))
 			.build();
 
 		imageRepository.save(image);

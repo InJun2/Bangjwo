@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bangjwo.global.common.image.FileUploaderPort;
+import com.bangjwo.global.common.util.ImageUrlUtil;
 import com.bangjwo.member.domain.entity.Member;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class MemberImageService {
 		String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 		String imageUrl = fileUploader.upload(file, IMAGE_PATH, fileName);
 
-		member.updateProfileUrl(imageUrl);
+		member.updateProfileUrl(ImageUrlUtil.getFullUrl(imageUrl));
 	}
 }
 

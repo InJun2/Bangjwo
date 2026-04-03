@@ -137,6 +137,7 @@ public class ContractService {
 		SpecialClause specialClause = contract.getSpecialClause();
 		LandlordInfoConverter.updateDraft(landlordInfo, requestDto);
 		SpecialClauseConverter.updateDraft(specialClause, requestDto);
+		contractImageService.updateLandlordSignatures(landlordInfo, requestDto);
 	}
 
 	@Transactional
@@ -161,6 +162,7 @@ public class ContractService {
 	private void updateContractInfo(Contract contract, UpdateLandlordInfoDto dto) {
 		LandlordInfoConverter.updateFinal(contract.getLandlordInfo(), dto);
 		SpecialClauseConverter.updateFinal(contract.getSpecialClause(), dto);
+		contractImageService.updateLandlordSignatures(contract.getLandlordInfo(), dto);
 		contract.updateContractStatus(ContractStatus.LANDLORD_COMPLETED);
 	}
 
@@ -232,7 +234,7 @@ public class ContractService {
 			.filter(status -> status.equals(ContractStatus.TENANT_SIGNED))
 			.orElseThrow(() -> new BusinessException(ContractErrorCode.INVALID_CONTRACT_STATUS_FOR_LANDLORD_SIGNATURE));
 		LandlordInfo landlordInfo = contract.getLandlordInfo();
-		contractImageService.updateLandlordSignatures(landlordInfo, dto);
+		contractImageService.updateLastLandlordSignatures(landlordInfo, dto);
 		contract.updateContractStatus(ContractStatus.COMPLETED);
 		contract.getRoom().updateStatus(RoomStatus.SOLD_OUT);
 	}
