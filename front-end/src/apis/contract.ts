@@ -3,9 +3,9 @@ import axiosInstance from '../utils/axiosInstances'
 import { UpdateLandlordInfoDto } from '../features/contract/data/contract.dto';
 
 interface FinalizeContractResponse {
-    success: boolean;
-    message: string;
-  }
+  success: boolean;
+  message: string;
+}
 
 export function useCreateContract() {
   return useMutation({
@@ -56,7 +56,6 @@ export function useFinalizeTenantContract() {
   });
 }
 
-
 export function useGetLandlordInfo() {
   return useQuery({
     queryKey: ['landlordInfo'],
@@ -66,11 +65,15 @@ export function useGetLandlordInfo() {
 }
 
 export function useSaveLandlordInfo() {
-    return useMutation<unknown, unknown, UpdateLandlordInfoDto>({
-      mutationFn: (data) =>
-        axiosInstance.patch('/api/v1/contract/landlord', data).then(res => res.data),
-    });
-  }
+  return useMutation<unknown, unknown, FormData>({
+    mutationFn: (formData) =>
+      axiosInstance.patch('/api/v1/contract/landlord', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }).then(res => res.data),
+  });
+}
 
 export function useUploadLandlordSignature() {
   return useMutation({
@@ -84,16 +87,24 @@ export function useUploadLandlordSignature() {
 }
 
 export function useFinalizeLandlordContract() {
-    return useMutation<FinalizeContractResponse, Error, UpdateLandlordInfoDto>({
-      mutationFn: (data) =>
-        axiosInstance.patch("/api/v1/contract/landlord/final", data).then(res => res.data),
-    });
-  }
+  return useMutation<FinalizeContractResponse, Error, FormData>({
+    mutationFn: (formData) =>
+      axiosInstance.patch("/api/v1/contract/landlord/final", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }).then(res => res.data),
+  });
+}
 
 export function useUpdateLandlordAfterTenant() {
-  return useMutation({
-    mutationFn: (data) =>
-      axiosInstance.patch('/api/v1/contract/landlord/final/after-tenant', data).then(res => res.data),
+  return useMutation<unknown, unknown, FormData>({
+    mutationFn: (formData) =>
+      axiosInstance.patch('/api/v1/contract/landlord/final/after-tenant', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }).then(res => res.data),
   })
 }
 
