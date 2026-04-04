@@ -10,6 +10,7 @@ import { useChatStore } from "../../../store/chatStore";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useCreateContract } from "../../../apis/contract";
 import { useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "../../../utils/axiosInstances";
 
 interface ChatRoomProps {
   chatId: number | null;
@@ -46,10 +47,22 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
     ? `월세 ${chatRoom.deposit}/${chatRoom.monthly}`
     : "월세";
 
-  const handleOpenContract = (mode: "seller" | "buyer") => {
+  const handleOpenContract = async (mode: "seller" | "buyer") => {
     if (chatId === null || !chatRoom?.roomId) return;
 
-    const currentContractId = chatRoom.contractId || 0;
+    let currentContractId = chatRoom.contractId || 0;
+
+    try {
+      const response = await axiosInstance.get(`/api/v1/contract/active/${chatRoom.roomId}`); 
+      const fetchedContractId = Number(response.data) || 0;
+
+      if (fetchedContractId > 0) {
+        currentContractId = fetchedContractId;
+        setChatRoom({ ...chatRoom, contractId: fetchedContractId });
+      }
+    } catch (error) {
+      console.error("진행 중인 계약서 조회 실패:", error);
+    }
 
     if (currentContractId > 0) {
       window.open(`/${mode}-contract/${chatRoom.roomId}/${currentContractId}`, "_blank", "noopener,noreferrer");
@@ -64,11 +77,10 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
         return; 
       }
 
-      // 3. 임대인(seller)일 경우 백엔드에 생성 요청!
       createContractMutation.mutate(
         { 
           roomId: chatRoom.roomId,
-          tenantId: chatRoom.otherId // 🚀 핵심 추가: 상대방(임차인)의 ID를 같이 보냅니다!
+          tenantId: chatRoom.otherId
         } as any, 
         {
           onSuccess: (newContractId) => {
@@ -93,7 +105,6 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
     }
   };
 
-  // 메시지와 날짜 배지를 함께 렌더링하는 함수
   const renderMessagesWithDateBadge = () => {
     const result: React.ReactNode[] = [];
     let lastDate: string | null = null;
@@ -149,13 +160,13 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
         {showContractButton && (
           <ContractActionButton
             text="[임대인] 계약서 작성하기"
-            onClick={() => handleOpenContract("seller")} // 👈 수정됨
+            onClick={() => handleOpenContract("seller")}
           />
         )}
         {showContractButton && (
           <ContractActionButton
             text="[임차인] 계약서 작성하기"
-            onClick={() => handleOpenContract("buyer")} // 👈 수정됨
+            onClick={() => handleOpenContract("buyer")}
           />
         )}
       </div>
