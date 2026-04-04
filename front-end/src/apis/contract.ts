@@ -139,3 +139,21 @@ export function useGetContractDetail() {
       axiosInstance.get('/api/v1/contract/detail').then(res => res.data),
   })
 }
+
+export function useFinalizeLandlordSignature() {
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      axiosInstance.patch('/api/v1/contract/landlord/signatures', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(res => res.data),
+  });
+}
+
+export function useFinalizeTenantSignature() {
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      axiosInstance.patch('/api/v1/contract/tenant/signature', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(res => res.data),
+  });
+}
