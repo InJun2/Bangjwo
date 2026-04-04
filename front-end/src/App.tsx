@@ -27,6 +27,7 @@ import PageMySell from "./features/mypage/sell/pages/PageMySell";
 import PageMyLike from "./features/mypage/like/pages/PageMyLike";
 import BuyerContractPage from "./features/contract/pages/BuyerContractPage";
 import PageMyContract from "./features/mypage/contract/pages/PageMyContract";
+import FinalSignPage from "./features/contract/pages/FinalSignPage";
 import RedirectIfNotAuth from "./features/auth/components/RedirectIfNotAuth";
 import ChatbotPage from "./features/chatbot/pages/ChatbotPage";
 import PaymentTest from "./features/payment2/pages/PaymentTest";
@@ -121,6 +122,7 @@ function App() {
           <Route path="/test/button" element={<PageTestButton />} />
           <Route path="/seller-contract/:roomId/:contractId" element={<SellerContractPage />} />
           <Route path="/buyer-contract/:roomId/:contractId" element={<BuyerContractPage />} />
+          <Route path="/final-sign/:roomId/:contractId" element={<FinalSignPage />} />
           <Route path="/chat" element={<ChatPageOnly />} />
           <Route
             path="/chatbot-notice"

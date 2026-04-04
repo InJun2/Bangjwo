@@ -30,6 +30,7 @@ interface ContractProps {
   mode: "lessor" | "lessee";
   roomData?: RoomDetailDto;
   contractId?: number;
+  isReadOnly?: boolean;
 }
 
 export interface RoomDetailDto {
@@ -56,7 +57,7 @@ interface FooterState {
 }
 
 const Contract = forwardRef<ContractRefType, ContractProps>(
-  ({ mode, roomData, contractId }, ref) => {
+  ({ mode, roomData, contractId, isReadOnly = false }, ref) => {
     const [leaseType, setLeaseType] = useState<
       "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null
     >(null);
@@ -119,12 +120,18 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
 
     const [signatureModalOpen, setSignatureModalOpen] = useState(false);
     const [activeSignatureType, setActiveSignatureType] = useState<
-      "unpaid" | "priority" | "receipt" | null
+      "unpaid" | "priority" | "receipt" | "final" | null
     >(null);
 
     const [unpaidTaxSignature, setUnpaidTaxSignature] = useState<string | null>(null);
     const [priorityDateSignature, setPriorityDateSignature] = useState<string | null>(null);
     const [receiptSignature, setReceiptSignature] = useState<string | null>(null);
+    const [finalSignature, setFinalSignature] = useState<string | null>(null);
+
+    const handleSignClick = (role: "lessor" | "lessee") => {
+      setActiveSignatureType("final");
+      setSignatureModalOpen(true);
+    };
 
     useEffect(() => {
       const fetchContractData = async () => {
@@ -140,8 +147,6 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
 
           const response = await axiosInstance.get(url);
           const data = response.data;
-
-          console.log("🔥 서버에서 무사히 가져온 전체 데이터:", data);
 
           setRentalPropertyAddress(data.rentalPropertyAddress || "");
           setRentalPartAddress(data.rentalPartAddress || "");
@@ -220,7 +225,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           setReceiptSignature(lessorData.landlordSignatureUrl3 || data.landlordSignatureUrl3 || null);
 
         } catch (error) {
-          console.error("❌ 계약서 불러오기 에러:", error);
+          console.error(error);
         }
       };
 
@@ -241,6 +246,9 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
         setPriorityDateSignature(dataUrl);
       } else if (activeSignatureType === "receipt") {
         setReceiptSignature(dataUrl);
+      }
+      if (activeSignatureType === "final") {
+        setFinalSignature(dataUrl);
       }
       setSignatureModalOpen(false);
     };
@@ -301,8 +309,6 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
         residentRegistrationNumber: footerInfo.lessor.ssn,
         phoneNumber: footerInfo.lessor.phone,
         name: footerInfo.lessor.name,
-        
-        
         landlordSignatureUrl1: unpaidTaxSignature || "",
         landlordSignatureUrl2: priorityDateSignature || "",
         landlordSignatureUrl3: receiptSignature || "",
@@ -321,179 +327,180 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
         sig1: unpaidTaxSignature,
         sig2: priorityDateSignature,
         sig3: receiptSignature,
+        finalSignature: finalSignature,
       }),
     }));
 
     return (
       <section className="min-h-screen bg-white">
-        <ContractHeader
-          mode={mode}
-          lessorName={footerInfo.lessor.name} 
-          lesseeName={footerInfo.lessee.name}
-          
-          onLessorNameChange={(val) =>
-            setFooterInfo((prev) => ({
-              ...prev,
-              lessor: { ...prev.lessor, name: val },
-            }))
-          }
-          onLesseeNameChange={(val) =>
-            setFooterInfo((prev) => ({
-              ...prev,
-              lessee: { ...prev.lessee, name: val },
-            }))
-          }
-          
-          leaseType={leaseType}
-          setLeaseType={setLeaseType}
-        />
-
-        <HouseInfoSection
-          mode={mode}
-          contractType={contractType || ""}
-          setContractType={(value: string) =>
-            setContractType(value as ContractType)
-          }
-          rentalPartDetailAddress={rentalPartDetailAddress}
-          address={rentalPropertyAddress}
-          detailAddress={rentalPartAddress}
-          landPurpose={rentalHousingLandType}
-          landArea={rentalHousingLandArea}
-          buildingStructure={propertyStructure}
-          buildingUsage={propertyPurpose}
-          buildingArea={propertyArea}
-          leaseDetail={rentalPartDetailAddress}
-          leaseArea={rentalPartArea}
-          unpaidTaxOption={taxArrears as any}
-          priorityDateOption={priorityConfirmedDateYn ? "exist" : "none"}
-          unpaidTaxSignature={unpaidTaxSignature}
-          priorityDateSignature={priorityDateSignature}
-          openSignatureModal={openSignatureModal}
-          onChange={(field, value) => {
-            const map: Record<string, Dispatch<SetStateAction<string>>> = {
-              leaseDetail: setRentalPartDetailAddress,
-              rentalPartDetailAddress: setRentalPartDetailAddress,
-              address: setRentalPropertyAddress,
-              detailAddress: setRentalPartAddress,
-              landPurpose: setRentalHousingLandType,
-              landArea: setRentalHousingLandArea,
-              buildingStructure: setPropertyStructure,
-              buildingUsage: setPropertyPurpose,
-              buildingArea: setPropertyArea,
-              leaseArea: setRentalPartArea,
-            };
-            if (map[field]) {
-              map[field](value);
+        <div className={isReadOnly ? "pointer-events-none opacity-90" : ""}>
+          <ContractHeader
+            mode={mode}
+            lessorName={footerInfo.lessor.name} 
+            lesseeName={footerInfo.lessee.name}
+            onLessorNameChange={(val) =>
+              setFooterInfo((prev) => ({
+                ...prev,
+                lessor: { ...prev.lessor, name: val },
+              }))
             }
-          }}
-          onOptionChange={(field, value) => {
-            if (field === "unpaidTaxOption") setTaxArrears(value === "exist");
-            if (field === "priorityDateOption")
-              setPriorityConfirmedDateYn(value === "exist");
-          }}
-        />
+            onLesseeNameChange={(val) =>
+              setFooterInfo((prev) => ({
+                ...prev,
+                lessee: { ...prev.lessee, name: val },
+              }))
+            }
+            leaseType={leaseType}
+            setLeaseType={setLeaseType}
+          />
 
-        <ContractBody
-          mode={mode}
-          deposit={depositAmount}
-          setDeposit={setDepositAmount}
-          contractFee={contractFee}
-          setContractFee={setContractFee}
-          monthlyRent={monthlyRent}
-          setMonthlyRent={setMonthlyRent}
-          monthlyRentType={monthlyRentType}
-          setPaymentMethod={setMonthlyRentType}
-          middleFee={middleFee}
-          setMiddleFee={setMiddleFee}
-          finalPayment={balance}
-          setFinalPayment={setBalance}
-          middlePaymentDate={
-            interimPaymentDate ? new Date(interimPaymentDate) : null
-          }
-          setMiddlePaymentDate={(date: Date | null) =>
-            setInterimPaymentDate(date ? date.toISOString() : "")
-          }
-          balancePaymentDate={
-            balancePaymentDate ? new Date(balancePaymentDate) : null
-          }
-          setBalancePaymentDate={(date: Date | null) =>
-            setBalancePaymentDate(date ? date.toISOString() : "")
-          }
-          monthlyRentPaymentDate={
-            monthlyRentPaymentDate ? String(monthlyRentPaymentDate) : null
-          }
-          setMonthlyRentPaymentDate={(date: string | null) =>
-            setMonthlyRentPaymentDate(date ? date : "")
-          }
-          monthlyRentAccountBank={monthlyRentAccountBank}
-          setMonthlyRentAccountBank={setMonthlyRentAccountBank}
-          monthlyRentAccountNumber={monthlyRentAccountNumber}
-          setMonthlyRentAccountNumber={setMonthlyRentAccountNumber}
-          fixedManagementFee={fixedManagementFee}
-          setFixedManagementFee={setFixedManagementFee}
-          unfixedManagementFee={unfixedManagementFee}
-          setUnfixedManagementFee={setUnfixedManagementFee}
-          leaseStartDate={leaseStartDate ? new Date(leaseStartDate) : null}
-          setLeaseStartDate={(date: Date | null) =>
-            setLeaseStartDate(date ? date.toISOString() : "")
-          }
-          leaseEndDate={leaseEndDate ? new Date(leaseEndDate) : null}
-          setLeaseEndDate={(date: Date | null) =>
-            setLeaseEndDate(date ? date.toISOString() : "")
-          }
-          facilitiesRepairStatus={facilitiesRepairStatus}
-          setFacilitiesRepairStatus={setFacilitiesRepairStatus}
-          facilitiesRepairContent={facilitiesRepairContent}
-          setFacilitiesRepairContent={setFacilitiesRepairContent}
-          repairCompletionByBalanceDate={
-            repairCompletionByBalanceDate
-              ? new Date(repairCompletionByBalanceDate)
-              : null
-          }
-          setRepairCompletionByBalanceDate={(date: Date | null) =>
-            setRepairCompletionByBalanceDate(date ? date.toISOString() : "")
-          }
-          repairCompletionEtc={repairCompletionEtc}
-          setRepairCompletionEtc={setRepairCompletionEtc}
-          notRepairedByBalanceDate={
-            notRepairedByBalanceDate ? new Date(notRepairedByBalanceDate) : null
-          }
-          setNotRepairedByBalanceDate={(date: Date | null) =>
-            setNotRepairedByBalanceDate(date ? date.toISOString() : "")
-          }
-          notRepairedEtc={notRepairedEtc}
-          setNotRepairedEtc={setNotRepairedEtc}
-          landlordBurden={landlordBurden}
-          setLandlordBurden={setLandlordBurden}
-          tenantBurden={tenantBurden}
-          setTenantBurden={setTenantBurden}
-          receiptSignature={receiptSignature}
-          openSignatureModal={openSignatureModal}
-        />
+          <HouseInfoSection
+            mode={mode}
+            contractType={contractType || ""}
+            setContractType={(value: string) =>
+              setContractType(value as ContractType)
+            }
+            rentalPartDetailAddress={rentalPartDetailAddress}
+            address={rentalPropertyAddress}
+            detailAddress={rentalPartAddress}
+            landPurpose={rentalHousingLandType}
+            landArea={rentalHousingLandArea}
+            buildingStructure={propertyStructure}
+            buildingUsage={propertyPurpose}
+            buildingArea={propertyArea}
+            leaseDetail={rentalPartDetailAddress}
+            leaseArea={rentalPartArea}
+            unpaidTaxOption={taxArrears as any}
+            priorityDateOption={priorityConfirmedDateYn ? "exist" : "none"}
+            unpaidTaxSignature={unpaidTaxSignature}
+            priorityDateSignature={priorityDateSignature}
+            openSignatureModal={openSignatureModal}
+            onChange={(field, value) => {
+              const map: Record<string, Dispatch<SetStateAction<string>>> = {
+                leaseDetail: setRentalPartDetailAddress,
+                rentalPartDetailAddress: setRentalPartDetailAddress,
+                address: setRentalPropertyAddress,
+                detailAddress: setRentalPartAddress,
+                landPurpose: setRentalHousingLandType,
+                landArea: setRentalHousingLandArea,
+                buildingStructure: setPropertyStructure,
+                buildingUsage: setPropertyPurpose,
+                buildingArea: setPropertyArea,
+                leaseArea: setRentalPartArea,
+              };
+              if (map[field]) {
+                map[field](value);
+              }
+            }}
+            onOptionChange={(field, value) => {
+              if (field === "unpaidTaxOption") setTaxArrears(value === "exist");
+              if (field === "priorityDateOption")
+                setPriorityConfirmedDateYn(value === "exist");
+            }}
+          />
 
-        <SpecialTerms
-          mode={mode}
-          moveInRegistrationDate={
-            moveInRegistrationDate ? new Date(moveInRegistrationDate) : null
-          }
-          setMoveInRegistrationDate={(date: Date | null) =>
-            setMoveInRegistrationDate(date ? date.toISOString() : "")
-          }
-          unpaidAmount={unpaidAmount}
-          setUnpaidAmount={setUnpaidAmount}
-          disputeResolution={disputeResolution}
-          setDisputeResolution={setDisputeResolution}
-          isHousingReconstructionPlanned={isHousingReconstructionPlanned}
-          setIsHousingReconstructionPlanned={setIsHousingReconstructionPlanned}
-          constructionPeriod={constructionPeriod}
-          setConstructionPeriod2={setConstructionPeriod}
-          estimatedConstructionDuration={estimatedConstructionDuration}
-          setEstimatedConstructionDuration={setEstimatedConstructionDuration}
-          isDetailedAddressConsentGiven={isDetailedAddressConsentGiven}
-          setIsDetailedAddressConsentGiven={setIsDetailedAddressConsentGiven}
-          etc={etc}
-          setEtc={setEtc}
-        />
+          <ContractBody
+            mode={mode}
+            deposit={depositAmount}
+            setDeposit={setDepositAmount}
+            contractFee={contractFee}
+            setContractFee={setContractFee}
+            monthlyRent={monthlyRent}
+            setMonthlyRent={setMonthlyRent}
+            monthlyRentType={monthlyRentType}
+            setPaymentMethod={setMonthlyRentType}
+            middleFee={middleFee}
+            setMiddleFee={setMiddleFee}
+            finalPayment={balance}
+            setFinalPayment={setBalance}
+            middlePaymentDate={
+              interimPaymentDate ? new Date(interimPaymentDate) : null
+            }
+            setMiddlePaymentDate={(date: Date | null) =>
+              setInterimPaymentDate(date ? date.toISOString() : "")
+            }
+            balancePaymentDate={
+              balancePaymentDate ? new Date(balancePaymentDate) : null
+            }
+            setBalancePaymentDate={(date: Date | null) =>
+              setBalancePaymentDate(date ? date.toISOString() : "")
+            }
+            monthlyRentPaymentDate={
+              monthlyRentPaymentDate ? String(monthlyRentPaymentDate) : null
+            }
+            setMonthlyRentPaymentDate={(date: string | null) =>
+              setMonthlyRentPaymentDate(date ? date : "")
+            }
+            monthlyRentAccountBank={monthlyRentAccountBank}
+            setMonthlyRentAccountBank={setMonthlyRentAccountBank}
+            monthlyRentAccountNumber={monthlyRentAccountNumber}
+            setMonthlyRentAccountNumber={setMonthlyRentAccountNumber}
+            fixedManagementFee={fixedManagementFee}
+            setFixedManagementFee={setFixedManagementFee}
+            unfixedManagementFee={unfixedManagementFee}
+            setUnfixedManagementFee={setUnfixedManagementFee}
+            leaseStartDate={leaseStartDate ? new Date(leaseStartDate) : null}
+            setLeaseStartDate={(date: Date | null) =>
+              setLeaseStartDate(date ? date.toISOString() : "")
+            }
+            leaseEndDate={leaseEndDate ? new Date(leaseEndDate) : null}
+            setLeaseEndDate={(date: Date | null) =>
+              setLeaseEndDate(date ? date.toISOString() : "")
+            }
+            facilitiesRepairStatus={facilitiesRepairStatus}
+            setFacilitiesRepairStatus={setFacilitiesRepairStatus}
+            facilitiesRepairContent={facilitiesRepairContent}
+            setFacilitiesRepairContent={setFacilitiesRepairContent}
+            repairCompletionByBalanceDate={
+              repairCompletionByBalanceDate
+                ? new Date(repairCompletionByBalanceDate)
+                : null
+            }
+            setRepairCompletionByBalanceDate={(date: Date | null) =>
+              setRepairCompletionByBalanceDate(date ? date.toISOString() : "")
+            }
+            repairCompletionEtc={repairCompletionEtc}
+            setRepairCompletionEtc={setRepairCompletionEtc}
+            notRepairedByBalanceDate={
+              notRepairedByBalanceDate ? new Date(notRepairedByBalanceDate) : null
+            }
+            setNotRepairedByBalanceDate={(date: Date | null) =>
+              setNotRepairedByBalanceDate(date ? date.toISOString() : "")
+            }
+            notRepairedEtc={notRepairedEtc}
+            setNotRepairedEtc={setNotRepairedEtc}
+            landlordBurden={landlordBurden}
+            setLandlordBurden={setLandlordBurden}
+            tenantBurden={tenantBurden}
+            setTenantBurden={setTenantBurden}
+            receiptSignature={receiptSignature}
+            openSignatureModal={openSignatureModal}
+          />
+
+          <SpecialTerms
+            mode={mode}
+            moveInRegistrationDate={
+              moveInRegistrationDate ? new Date(moveInRegistrationDate) : null
+            }
+            setMoveInRegistrationDate={(date: Date | null) =>
+              setMoveInRegistrationDate(date ? date.toISOString() : "")
+            }
+            unpaidAmount={unpaidAmount}
+            setUnpaidAmount={setUnpaidAmount}
+            disputeResolution={disputeResolution}
+            setDisputeResolution={setDisputeResolution}
+            isHousingReconstructionPlanned={isHousingReconstructionPlanned}
+            setIsHousingReconstructionPlanned={setIsHousingReconstructionPlanned}
+            constructionPeriod={constructionPeriod}
+            setConstructionPeriod2={setConstructionPeriod}
+            estimatedConstructionDuration={estimatedConstructionDuration}
+            setEstimatedConstructionDuration={setEstimatedConstructionDuration}
+            isDetailedAddressConsentGiven={isDetailedAddressConsentGiven}
+            setIsDetailedAddressConsentGiven={setIsDetailedAddressConsentGiven}
+            etc={etc}
+            setEtc={setEtc}
+          />
+        </div>
 
         <ContractFooterSection
           mode={mode}
@@ -501,6 +508,8 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           setFooterInfo={setFooterInfo}
           contractWrittenDate={contractWrittenDate}
           setContractWrittenDate={setContractWrittenDate}
+          isReadOnly={isReadOnly}
+          onSignClick={handleSignClick}
         />
 
         <SignatureModal

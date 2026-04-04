@@ -10,7 +10,7 @@ interface FooterInfo {
   ssn: string;
   phone: string;
   name: string;
-  moveInDate?: string; // 🚀 입주일 데이터 추가
+  moveInDate?: string;
 }
 
 interface FooterState {
@@ -24,6 +24,8 @@ interface ContractFooterSectionProps {
   setFooterInfo: Dispatch<SetStateAction<FooterState>>;
   contractWrittenDate: string;
   setContractWrittenDate: Dispatch<SetStateAction<string>>;
+  isReadOnly?: boolean;
+  onSignClick?: (role: "lessor" | "lessee") => void;
 }
 
 const ContractFooterSection = ({
@@ -32,6 +34,8 @@ const ContractFooterSection = ({
   setFooterInfo,
   contractWrittenDate,
   setContractWrittenDate,
+  isReadOnly = false,
+  onSignClick,
 }: ContractFooterSectionProps) => {
   const isLessor = mode === "lessor";
   const isLessee = mode === "lessee";
@@ -42,6 +46,8 @@ const ContractFooterSection = ({
 
   const [showLessorSignatureHelp, setShowLessorSignatureHelp] = useState(false);
   const [showLesseeSignatureHelp, setShowLesseeSignatureHelp] = useState(false);
+
+  const isContractDateEditable = !isReadOnly && isLessor;
 
   const handleChange = (
     role: "lessor" | "lessee",
@@ -70,18 +76,19 @@ const ContractFooterSection = ({
     customWidth?: string,
     maxLength?: number
   ) => {
-    const editable =
-      (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
-      
+    const inputEditable =
+      !isReadOnly &&
+      ((role === "lessor" && isLessor) || (role === "lessee" && isLessee));
+    
     const value = footerInfo[role][key] || "";
 
     if (key === "address") {
       return (
         <div
-          onClick={() => editable && handleAddressSearch(role)}
-          className={editable ? "cursor-pointer w-full" : "w-full"}
+          onClick={() => inputEditable && handleAddressSearch(role)}
+          className={inputEditable ? "cursor-pointer w-full" : "w-full"}
         >
-          {editable ? (
+          {inputEditable ? (
             <EditableInputBox
               value={value}
               onChange={(val) => handleChange(role, key, val)}
@@ -99,8 +106,7 @@ const ContractFooterSection = ({
         </div>
       );
     }
-
-    return editable ? (
+    return inputEditable ? (
       <EditableInputBox
         value={value}
         onChange={(val) => handleChange(role, key, val)}
@@ -128,7 +134,7 @@ const ContractFooterSection = ({
         {/* 계약서 작성일 */}
         <div className="flex items-center gap-4 mb-6">
           <span className="w-[60px] font-bold text-lg">날짜</span>
-          <div className={isLessor ? "w-[220px]" : "cursor-not-allowed"}>
+          <div className={isContractDateEditable ? "w-[220px]" : "cursor-not-allowed"}>
             <DatePickerInput
               selectedDate={selectedDate}
               onChange={(date) =>
@@ -137,7 +143,7 @@ const ContractFooterSection = ({
                 )
               }
               placeholder="계약 날짜 선택"
-              disabled={!isLessor}
+              disabled={!isContractDateEditable}
             />
           </div>
         </div>
@@ -147,8 +153,9 @@ const ContractFooterSection = ({
       {["lessor", "lessee"].map((roleKey) => {
         const role = roleKey as "lessor" | "lessee";
         const label = role === "lessor" ? "임대인" : "임차인";
-        const editable =
-          (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
+        
+        const inputEditable = !isReadOnly && ((role === "lessor" && isLessor) || (role === "lessee" && isLessee));
+        const signatureEditable = (role === "lessor" && isLessor) || (role === "lessee" && isLessee);
         
         const showSignatureHelp = role === "lessor" ? showLessorSignatureHelp : showLesseeSignatureHelp;
         const setShowSignatureHelp = role === "lessor" ? setShowLessorSignatureHelp : setShowLesseeSignatureHelp;
@@ -164,35 +171,18 @@ const ContractFooterSection = ({
               </span>
               <div className="flex items-center gap-4 w-full">
                 <span className="w-[100px] font-medium">주소</span>
-                {renderInputBox(
-                  role,
-                  "address",
-                  "클릭하여 주소 검색",
-                  "w-full"
-                )}
+                {renderInputBox(role, "address", "클릭하여 주소 검색", "w-full")}
               </div>
             </div>
 
             <div className="ml-[114px] flex flex-col gap-5">
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">주민등록번호</span>
-                {renderInputBox(
-                  role,
-                  "ssn",
-                  "000000-0000000",
-                  "w-[300px]",
-                  14
-                )}
+                {renderInputBox(role, "ssn", "000000-0000000", "w-[300px]", 14)}
               </div>
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">전화</span>
-                {renderInputBox(
-                  role,
-                  "phone",
-                  "010-0000-0000",
-                  "w-[300px]",
-                  13
-                )}
+                {renderInputBox(role, "phone", "010-0000-0000", "w-[300px]", 13)}
               </div>
               <div className="flex items-center gap-4">
                 <span className="w-[100px] font-medium">성명</span>
@@ -202,7 +192,7 @@ const ContractFooterSection = ({
               {role === "lessee" && (
                 <div className="flex items-center gap-4">
                   <span className="w-[100px] font-medium">입주일</span>
-                  <div className={editable ? "w-[220px]" : "cursor-not-allowed"}>
+                  <div className={inputEditable ? "w-[220px]" : "cursor-not-allowed"}>
                     <DatePickerInput
                       selectedDate={
                         footerInfo.lessee.moveInDate
@@ -217,7 +207,7 @@ const ContractFooterSection = ({
                         )
                       }
                       placeholder="입주일 선택"
-                      disabled={!editable}
+                      disabled={!inputEditable}
                     />
                   </div>
                 </div>
@@ -227,7 +217,7 @@ const ContractFooterSection = ({
               <div className="flex items-center gap-4">
                 <div className="w-[100px] flex items-center gap-1">
                   <span className="font-medium">서명</span>
-                  {editable && (
+                  {signatureEditable && (
                     <button
                       type="button"
                       onClick={() => setShowSignatureHelp((prev) => !prev)}
@@ -247,8 +237,17 @@ const ContractFooterSection = ({
                     </button>
                   )}
                 </div>
+                
                 <div className="flex items-center gap-2">
-                  <div className="w-[120px] h-[40px] border-2 border-dashed border-neutral-light200 bg-white flex items-center justify-center text-neutral-gray text-xs">
+                  <div 
+                    onClick={() => {
+                      if (signatureEditable && onSignClick) {
+                        onSignClick(role);
+                      }
+                    }}
+                    className={`w-[120px] h-[40px] border-2 border-dashed border-neutral-light200 bg-white flex items-center justify-center text-xs
+                      ${signatureEditable ? "cursor-pointer hover:bg-neutral-light100 text-neutral-black font-bold" : "cursor-not-allowed text-neutral-gray"}`}
+                  >
                     최종 확인 후 서명
                   </div>
                   <span className="text-sm font-bold">(인)</span>
