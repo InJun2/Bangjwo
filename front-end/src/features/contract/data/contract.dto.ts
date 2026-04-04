@@ -61,3 +61,12 @@ export interface UpdateLandlordInfoDto {
   landlordSignatureUrl2: string;
   landlordSignatureUrl3: string;
 }
+
+export interface UpdateTenantInfoDto {
+  contractId: number;
+  name: string;
+  address: string;
+  residentRegistrationNumber: string;
+  phone: string;
+  moveInDate: string;
+}

@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import axiosInstance from '../utils/axiosInstances'
-import { UpdateLandlordInfoDto } from '../features/contract/data/contract.dto';
+import { UpdateLandlordInfoDto, UpdateTenantInfoDto } from '../features/contract/data/contract.dto';
 
 interface FinalizeContractResponse {
   success: boolean;

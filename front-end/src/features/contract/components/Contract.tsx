@@ -15,12 +15,15 @@ import SignatureModal from "./SignatureModal";
 import ContractFooterSection from "./ContractFooterSection";
 import {
   UpdateLandlordInfoDto,
+  UpdateTenantInfoDto,
   ContractType,
   MonthlyRentType,
 } from "../data/contract.dto";
 
 export interface ContractRefType {
   getFormData: () => UpdateLandlordInfoDto;
+  getTenantFormData: () => UpdateTenantInfoDto;
+  getSignatures: () => any;
 }
 
 interface ContractProps {
@@ -44,6 +47,7 @@ interface FooterInfo {
   ssn: string;
   phone: string;
   name: string;
+  moveInDate?: string;
 }
 
 interface FooterState {
@@ -56,8 +60,6 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [leaseType, setLeaseType] = useState<
       "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null
     >(null);
-    const [lessorName, setLessorName] = useState("");
-    const [lesseeName, setLesseeName] = useState("");
 
     const [rentalPropertyAddress, setRentalPropertyAddress] = useState("");
     const [rentalPartAddress, setRentalPartAddress] = useState("");
@@ -112,7 +114,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
 
     const [footerInfo, setFooterInfo] = useState<FooterState>({
       lessor: { address: "", ssn: "", phone: "", name: "" },
-      lessee: { address: "", ssn: "", phone: "", name: "" },
+      lessee: { address: "", ssn: "", phone: "", name: "", moveInDate: "" },
     });
 
     const [signatureModalOpen, setSignatureModalOpen] = useState(false);
@@ -194,6 +196,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           setLeaseType(data.leaseType || null);
 
           const lessorData = data.landlordInfo || data;
+          const lesseeData = data.tenantInfo || data;
 
           setFooterInfo((prev) => ({
             ...prev,
@@ -202,6 +205,13 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
               ssn: data.residentRegistrationNumber || "",
               phone: data.landlordPhone || "",
               name: data.landlordName || "",
+            },
+            lessee: {
+              address: lesseeData.address || lesseeData.tenantAddress || "",
+              ssn: lesseeData.residentRegistrationNumber || lesseeData.tenantResidentNumber || "",
+              phone: lesseeData.phone || lesseeData.tenantPhone || "",
+              name: lesseeData.name || lesseeData.tenantName || "",
+              moveInDate: lesseeData.moveInDate || "",
             },
           }));
 
@@ -297,6 +307,15 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
         landlordSignatureUrl2: priorityDateSignature || "",
         landlordSignatureUrl3: receiptSignature || "",
       }),
+
+      getTenantFormData: (): UpdateTenantInfoDto => ({
+        contractId: contractId || 0,
+        name: footerInfo.lessee.name,
+        phone: footerInfo.lessee.phone,
+        address: footerInfo.lessee.address,
+        residentRegistrationNumber: footerInfo.lessee.ssn,
+        moveInDate: footerInfo.lessee.moveInDate || "", 
+      }),
       
       getSignatures: () => ({
         sig1: unpaidTaxSignature,
@@ -309,10 +328,22 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
       <section className="min-h-screen bg-white">
         <ContractHeader
           mode={mode}
-          lessorName={lessorName}
-          lesseeName={lesseeName}
-          onLessorNameChange={setLessorName}
-          onLesseeNameChange={setLesseeName}
+          lessorName={footerInfo.lessor.name} 
+          lesseeName={footerInfo.lessee.name}
+          
+          onLessorNameChange={(val) =>
+            setFooterInfo((prev) => ({
+              ...prev,
+              lessor: { ...prev.lessor, name: val },
+            }))
+          }
+          onLesseeNameChange={(val) =>
+            setFooterInfo((prev) => ({
+              ...prev,
+              lessee: { ...prev.lessee, name: val },
+            }))
+          }
+          
           leaseType={leaseType}
           setLeaseType={setLeaseType}
         />
