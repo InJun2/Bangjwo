@@ -123,7 +123,7 @@ public class ContractController {
 	)
 	@PatchMapping(value = "/landlord/final/after-tenant", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Void> finalLandlordAfterTenant(
-		@Validated(FinalSave.class) @ModelAttribute UpdateLandlordInfoDto requestDto,
+		@Validated(FinalSave.class) @ModelAttribute UpdateTenantInfoDto requestDto,
 		@MemberHeader Long memberId) {
 		contractService.finalLandlordAfterTenant(requestDto, memberId);
 
@@ -227,6 +227,14 @@ public class ContractController {
 		ContractStatusResponseDto dto = contractService.getContractStatus(contractId, memberId);
 
 		return ResponseEntity.ok(dto);
+	}
+
+	@GetMapping("/active/{roomId}")
+	public ResponseEntity<Long> getActiveContractId(
+		@MemberHeader Long memberId,
+		@PathVariable Long roomId) {
+		Long contractId = contractService.findActiveContractId(roomId, memberId);
+		return ResponseEntity.ok(contractId);
 	}
 
 	@Operation(

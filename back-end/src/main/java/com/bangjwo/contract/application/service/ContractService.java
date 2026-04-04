@@ -149,10 +149,11 @@ public class ContractService {
 
 	@Transactional
 	@RedisLock(key = "'contract:' + #requestDto.contractId", errorCode = RedisLockErrorCode.TENANT_IN_PROGRESS)
-	public void finalLandlordAfterTenant(UpdateLandlordInfoDto requestDto, Long memberId) {
+	public void finalLandlordAfterTenant(UpdateTenantInfoDto requestDto, Long memberId) {
 		Contract contract = validateLandlordFinalContract(requestDto.getContractId(), memberId);
 
-		updateContractInfo(contract, requestDto);
+		TenantInfoConverter.updateFinal(contract.getTenantInfo(), requestDto);
+		contract.updateContractStatus(ContractStatus.TENANT_COMPLETED);
 	}
 
 	private void updateContractInfo(Contract contract, UpdateLandlordInfoDto dto) {
@@ -360,5 +361,14 @@ public class ContractService {
 		}
 
 		return ContractConverter.convertContractVerify(contract);
+	}
+
+	@Transactional(readOnly = true)
+	public Long findActiveContractId(Long roomId, Long memberId) {
+		return contractRepository.findByRoom_RoomId(roomId)
+			.filter(c -> memberId.equals(c.getTenantId()) || memberId.equals(c.getLandlordId()))
+			.filter(c -> c.getContractStatus() != ContractStatus.COMPLETED)
+			.map(Contract::getContractId)
+			.orElse(0L);
 	}
 }
