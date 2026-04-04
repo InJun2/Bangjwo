@@ -7,7 +7,6 @@ interface RentTypeSelectorProps {
 // RentTypeSelector.tsx 내부 수정
 const RentTypeSelector = ({ mode, value, onChange }: RentTypeSelectorProps) => {
   const isLessee = mode === "lessee";
-  console.log(mode);
 
   if (isLessee) {
     value = "MONTHLY_WITH_DEPOSIT";
