@@ -215,6 +215,27 @@ public class ChatRoomController {
 	}
 
 	/*
+	 * 단일 채팅방 정보 조회 (계약서 상태 등 최신 정보 확인용)
+	 */
+	@Operation(
+		summary = "단일 채팅방 정보 조회",
+		description = "특정 채팅방의 최신 상태(계약서 ID 등)를 조회합니다.",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "조회 성공"),
+			@ApiResponse(responseCode = "400", description = "요청 데이터 오류")
+		},
+		security = @SecurityRequirement(name = "JWT")
+	)
+	@GetMapping("/info/{chatRoomId}")
+	public ResponseEntity<ChatRoomSummary> getChatRoomInfo(
+		@MemberHeader Long userId,
+		@PathVariable Long chatRoomId) {
+		ChatRoomSummary chatRoom = redisChatRoomService.getChatRoomInfo(userId, chatRoomId);
+
+		return ResponseEntity.ok(chatRoom);
+	}
+
+	/*
 	 * 채팅방 나가기(web-socket 구독 해제)
 	 * */
 	@Operation(
