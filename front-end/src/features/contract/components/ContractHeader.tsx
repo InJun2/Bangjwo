@@ -1,3 +1,4 @@
+import React from "react";
 import EditableInputBox from "./EditableInputBox";
 import DisabledInputBox from "./DisabledInputBox";
 import NoticeDefault from "../../../components/notices/NoticeDefault";
@@ -25,13 +26,13 @@ const ContractHeader = ({
   leaseType,
   setLeaseType,
 }: ContractHeaderProps) => {
-  const waGwa =
-    lessorName.length >= 2 ? (hasBatchim(lessorName) ? "과" : "와") : "와";
-  const eunNeun =
-    lesseeName.length >= 2 ? (hasBatchim(lesseeName) ? "은" : "는") : "는";
-    lessorName = lessorName.length >= 2 ? lessorName : "하정수";
-  leaseType = leaseType === null ? "MONTHLY_WITH_DEPOSIT" : leaseType;
+  const safeLessorName = lessorName && lessorName.length >= 2 ? lessorName : "하정수";
+  const safeLesseeName = lesseeName && lesseeName.length >= 2 ? lesseeName : "성명";
 
+  const waGwa = hasBatchim(safeLessorName) ? "과" : "와";
+  const eunNeun = hasBatchim(safeLesseeName) ? "은" : "는";
+  
+  const currentLeaseType = leaseType === null ? "MONTHLY_WITH_DEPOSIT" : leaseType;
 
   return (
     <>
@@ -51,8 +52,8 @@ const ContractHeader = ({
       <div className="mt-6 flex justify-end gap-6 items-center">
         <span className="text-base font-bold whitespace-nowrap"></span>
         <RentTypeSelector
-          mode={mode} // 또는 "lessee"
-          value={leaseType}
+          mode={mode}
+          value={currentLeaseType}
           onChange={setLeaseType}
         />
       </div>
@@ -61,24 +62,24 @@ const ContractHeader = ({
         <span>임대인</span>
         {mode === "lessor" ? (
           <EditableInputBox
-            value={lessorName}
+            value={lessorName} // 실제 데이터 바인딩
             onChange={onLessorNameChange}
-            placeholder="하정수"
+            placeholder="성명"
             minLength={2}
             maxLength={10}
             customWidth="w-[100px]"
           />
         ) : (
           <DisabledInputBox
-            value={lessorName}
-            placeholder="하정수"
+            value={safeLessorName}
+            placeholder="성명"
             customWidth="w-[100px]"
           />
         )}
         <span>{waGwa} 임차인</span>
         {mode === "lessee" ? (
           <EditableInputBox
-            value={lesseeName}
+            value={lesseeName} // 실제 데이터 바인딩
             onChange={onLesseeNameChange}
             placeholder="성명"
             minLength={2}
@@ -87,7 +88,7 @@ const ContractHeader = ({
           />
         ) : (
           <DisabledInputBox
-            value={lesseeName}
+            value={safeLesseeName}
             placeholder="성명"
             customWidth="w-[100px]"
           />

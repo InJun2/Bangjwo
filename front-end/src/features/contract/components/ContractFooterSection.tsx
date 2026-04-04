@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState, useEffect } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import EditableInputBox from "./EditableInputBox";
 import DisabledInputBox from "./DisabledInputBox";
 import NoticeGray from "../../../components/notices/NoticeGray";
@@ -10,6 +10,7 @@ interface FooterInfo {
   ssn: string;
   phone: string;
   name: string;
+  moveInDate?: string; // 🚀 입주일 데이터 추가
 }
 
 interface FooterState {
@@ -197,6 +198,30 @@ const ContractFooterSection = ({
                 <span className="w-[100px] font-medium">성명</span>
                 {renderInputBox(role, "name", "성명 입력", "w-[160px]")}
               </div>
+
+              {role === "lessee" && (
+                <div className="flex items-center gap-4">
+                  <span className="w-[100px] font-medium">입주일</span>
+                  <div className={editable ? "w-[220px]" : "cursor-not-allowed"}>
+                    <DatePickerInput
+                      selectedDate={
+                        footerInfo.lessee.moveInDate
+                          ? new Date(footerInfo.lessee.moveInDate)
+                          : null
+                      }
+                      onChange={(date) =>
+                        handleChange(
+                          role,
+                          "moveInDate",
+                          date ? date.toISOString().split("T")[0] : ""
+                        )
+                      }
+                      placeholder="입주일 선택"
+                      disabled={!editable}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* 서명란 */}
               <div className="flex items-center gap-4">
