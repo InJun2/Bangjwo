@@ -2,6 +2,7 @@ package com.bangjwo.room.application.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -15,6 +16,8 @@ import com.bangjwo.global.common.exception.BusinessException;
 import com.bangjwo.global.common.exception.RoomException;
 import com.bangjwo.global.common.page.PaginationRequest;
 import com.bangjwo.global.common.util.VerificationUtil;
+import com.bangjwo.member.application.dto.response.MyContractItemDto;
+import com.bangjwo.member.application.dto.response.MyContractListResponseDto;
 import com.bangjwo.member.application.service.MemberService;
 import com.bangjwo.portone.application.service.VerificationService;
 import com.bangjwo.room.application.convert.RoomConverter;
@@ -242,18 +245,35 @@ public class RoomService {
 	}
 
 	@Transactional(readOnly = true)
-	public RoomListResponseDto getContractedRooms(Long memberId, Integer page, Integer size) {
+	public MyContractListResponseDto getContractedRooms(Long memberId, Integer page, Integer size) {
 		var pageable = PaginationRequest.toPageable(page, size);
 		var contracts = contractRepository.findByLandlordIdOrTenantId(memberId, memberId, pageable);
 
-		var rooms = contracts.getContent().stream()
-			.map(Contract::getRoom)
-			.filter(room -> room.getDeletedAt() == null)
+		List<Contract> validContracts = contracts.getContent().stream()
+			.filter(contract -> contract.getRoom() != null && contract.getRoom().getDeletedAt() == null)
 			.toList();
 
-		int totalItems = (int)contracts.getTotalElements();
+		List<Room> rooms = validContracts.stream()
+			.map(Contract::getRoom)
+			.toList();
 
-		return createRoomListResponseDto(rooms, totalItems, pageable.getPageNumber(), pageable.getPageSize(), memberId);
+		Map<Room, Address> addressMap = addressService.findByRoomIn(rooms).stream()
+			.collect(Collectors.toMap(Address::getRoom, address -> address));
+
+		List<MyContractItemDto> items = validContracts.stream()
+			.map(contract -> {
+				Address address = addressMap.get(contract.getRoom());
+				return MyContractItemDto.of(contract, address, memberId);
+			})
+			.toList();
+		int totalItems = (int) contracts.getTotalElements();
+
+		return new MyContractListResponseDto(
+			totalItems,
+			pageable.getPageNumber() + 1,
+			pageable.getPageSize(),
+			items
+		);
 	}
 
 	private Specification<Room> buildRoomSearchSpec(Integer price, List<RoomAreaType> areaTypes,
@@ -269,15 +289,12 @@ public class RoomService {
 		if (price != null) {
 			spec = spec.and(RoomSpecification.monthlyRentLessThanOrEqual(price));
 		}
-
 		spec = spec.and(RoomSpecification.exclusiveAreaIn(areaTypes));
 
 		if (buildingType != null) {
 			spec = spec.and(RoomSpecification.buildingTypeEquals(buildingType));
 		}
-
 		spec = spec.and(RoomSpecification.roomInAddressBounds(minLat, maxLat, minLng, maxLng));
-
 		spec = spec.and(RoomSpecification.statusEquals(RoomStatus.ON_SALE));
 
 		return spec;

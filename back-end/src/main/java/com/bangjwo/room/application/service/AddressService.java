@@ -1,5 +1,6 @@
 package com.bangjwo.room.application.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -55,4 +56,7 @@ public class AddressService {
 		return addressRepository.findByRoomRoomIdIn(roomIds);
 	}
 
+	public List<Address> findByRoomIn(List<Room> rooms) {
+		return addressRepository.findByRoomIn(rooms);
+	}
 }

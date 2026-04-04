@@ -14,4 +14,6 @@ public interface AddressRepository extends JpaRepository<Address, Integer> {
 	Optional<Address> findByRoom(Room room);
 
 	List<Address> findByRoomRoomIdIn(List<Long> roomIds);
+
+	List<Address> findByRoomIn(List<Room> rooms);
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bangjwo.auth.resolver.MemberHeader;
 import com.bangjwo.member.application.dto.request.UpdateMemberRequestDto;
 import com.bangjwo.member.application.dto.response.MemberResponseDto;
+import com.bangjwo.member.application.dto.response.MyContractListResponseDto;
 import com.bangjwo.member.application.dto.response.ReviewListResponseDto;
 import com.bangjwo.member.application.service.MemberService;
 import com.bangjwo.portone.application.dto.IdentityDto;
@@ -85,7 +86,7 @@ public class MemberController {
 		security = @SecurityRequirement(name = "JWT")
 	)
 	@GetMapping("/contract")
-	public ResponseEntity<RoomListResponseDto> getContractedRooms(
+	public ResponseEntity<MyContractListResponseDto> getContractedRooms(
 		@MemberHeader Long memberId,
 		@RequestParam(required = false) Integer page,
 		@RequestParam(required = false) Integer size
