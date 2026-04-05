@@ -145,6 +145,7 @@ export function useFinalizeLandlordSignature() {
     mutationFn: (formData: FormData) =>
       axiosInstance.patch('/api/v1/contract/landlord/signatures', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 1200000,
       }).then(res => res.data),
   });
 }
