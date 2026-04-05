@@ -1,18 +1,18 @@
 import { useRef, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { toJpeg } from "html-to-image";
+import jsPDF from "jspdf";
+
 import Button from "../../../components/buttons/Button";
 import HeaderContract from "../../../components/headers/HeaderContract";
 import NoticeDefault from "../../../components/notices/NoticeDefault";
 import Contract, { ContractRefType } from "../components/Contract";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  useFinalizeLandlordSignature,
-  useFinalizeTenantSignature,
-} from "../../../apis/contract";
+import { useFinalizeLandlordSignature, useFinalizeTenantSignature } from "../../../apis/contract";
 
 const dataURLtoFile = (dataurl: string, filename: string) => {
   const arr = dataurl.split(",");
   const mimeMatch = arr[0].match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : "image/png";
+  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
@@ -24,21 +24,27 @@ const dataURLtoFile = (dataurl: string, filename: string) => {
 
 const FinalSignPage = () => {
   const contractRef = useRef<ContractRefType>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
+  
   const navigate = useNavigate();
   const { contractId } = useParams();
+  const location = useLocation();
 
-  const currentMode = "lessee";
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
-  const { mutate: finalApproveLandlord, isPending: isLandlordPending } =
-    useFinalizeLandlordSignature();
-  const { mutate: finalApproveTenant, isPending: isTenantPending } =
-    useFinalizeTenantSignature();
+  const roleFromState = location.state?.role;
+  const statusFromState = location.state?.status;
 
-  const isPending = isLandlordPending || isTenantPending;
+  const currentMode = roleFromState === "LANDLORD" ? "lessor" : "lessee";
+  const isCompleted = statusFromState === "COMPLETED";
 
-  const handleFinalApprove = () => {
+  const { mutate: finalApproveLandlord, isPending: isLandlordPending } = useFinalizeLandlordSignature();
+  const { mutate: finalApproveTenant, isPending: isTenantPending } = useFinalizeTenantSignature();
+
+  const isPending = isLandlordPending || isTenantPending || isPdfGenerating;
+
+  const handleFinalApprove = async () => {
     const signatures = contractRef.current?.getSignatures();
-
     const finalSigBase64 = signatures?.finalSignature;
 
     if (!finalSigBase64) {
@@ -46,71 +52,115 @@ const FinalSignPage = () => {
       return;
     }
 
-    const signatureFile = dataURLtoFile(finalSigBase64, "signature.png");
-    const formData = new FormData();
-    formData.append("contractId", String(contractId));
+    try {
+      setIsPdfGenerating(true);
+      const signatureFile = dataURLtoFile(finalSigBase64, "signature.jpeg");
+      const formData = new FormData();
+      formData.append("contractId", String(contractId));
 
-    if (currentMode === "lessor") {
-      formData.append("signature4", signatureFile);
+      if (currentMode === "lessor") {
+        formData.append("signature4", signatureFile);
 
-      finalApproveLandlord(formData, {
-        onSuccess: () => {
-          alert("임대인 최종 서명 및 계약이 완료되었습니다!");
-          navigate("/blockchain-loading");
-        },
-        onError: (err) => {
-          console.error("임대인 서명 에러:", err);
-          alert("서명 전송에 실패했습니다.");
-        },
-      });
-    } else {
-      formData.append("signature", signatureFile);
+        if (captureRef.current) {
+          const imgData = await toJpeg(captureRef.current, { 
+            quality: 0.8, 
+            pixelRatio: 1.5, 
+            backgroundColor: '#ffffff',
+            filter: (node: HTMLElement) => {
+              if (node.tagName === 'LINK' && (node as HTMLLinkElement).href.includes('fonts.googleapis.com')) {
+                return false;
+              }
+              return true;
+            }
+          });
+          
+          const pdf = new jsPDF("p", "mm", "a4");
+          const pdfWidth = pdf.internal.pageSize.getWidth();
 
-      finalApproveTenant(formData, {
-        onSuccess: () => {
-          alert("임차인 최종 서명이 완료되었습니다!");
-          navigate("/blockchain-loading");
-        },
-        onError: (err) => {
-          console.error("임차인 서명 에러:", err);
-          alert("서명 전송에 실패했습니다.");
-        },
-      });
+          const elWidth = captureRef.current.offsetWidth;
+          const elHeight = captureRef.current.offsetHeight;
+          const pdfHeight = (elHeight * pdfWidth) / elWidth;
+          
+          pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+          const pdfBlob = pdf.output("blob");
+          
+          const pdfFile = new File([pdfBlob], `contract_${contractId}.pdf`, { type: "application/pdf" });
+          
+          formData.append("pdfFile", pdfFile); 
+        }
+
+        finalApproveLandlord(formData, {
+          onSuccess: () => {
+            alert("임대인 최종 서명 및 계약이 완료되었습니다!");
+            navigate("/blockchain-loading");
+          },
+          onError: () => {
+            alert("서명 전송에 실패했습니다.");
+          },
+        });
+      } else {
+        // 임차인은 기존 로직 유지
+        formData.append("signature", signatureFile);
+        finalApproveTenant(formData, {
+          onSuccess: () => {
+            alert("임차인 최종 서명이 완료되었습니다!");
+            navigate("/mypage/contract");
+          },
+          onError: () => {
+            alert("서명 전송에 실패했습니다.");
+          },
+        });
+      }
+    } catch (error) {
+      console.error("PDF 생성 에러:", error);
+      alert("문서 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsPdfGenerating(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-white">
-      <HeaderContract title="주택임대차계약서 최종 확인 및 서명" />
+      <HeaderContract title={isCompleted ? "주택임대차계약서 조회" : "주택임대차계약서 최종 확인 및 서명"} />
 
       <main className="flex flex-row pt-10 px-4 gap-6">
         <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
-          <div className="flex flex-col items-center gap-6">
-            <NoticeDefault>
-              계약서 작성이 모두 완료되었습니다. <br />
-              <span className="text-red-500 font-bold">
-                내용은 더 이상 수정할 수 없습니다.
-              </span>{" "}
-              내용을 꼼꼼히 확인하신 후 하단에 서명해주세요.
-            </NoticeDefault>
+          {!isCompleted ? (
+            <div className="flex flex-col items-center gap-6">
+              <NoticeDefault>
+                계약서 작성이 모두 완료되었습니다. <br />
+                <span className="text-red-500 font-bold">내용은 더 이상 수정할 수 없습니다.</span> 내용을 꼼꼼히 확인하신 후 하단에 서명해주세요.
+              </NoticeDefault>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-6">
+              <NoticeDefault>
+                완료된 계약서입니다. <br />
+                내용과 서명을 확인하실 수 있습니다.
+              </NoticeDefault>
+            </div>
+          )}
+
+          <div ref={captureRef} className="bg-white pb-10">
+            <Contract
+              mode={currentMode}
+              isReadOnly={true}
+              isCompleted={isCompleted}
+              ref={contractRef}
+              contractId={Number(contractId)}
+            />
           </div>
 
-          <Contract
-            mode={currentMode}
-            isReadOnly={true}
-            ref={contractRef}
-            contractId={Number(contractId)}
-          />
-
           <div className="flex justify-center gap-6 pt-8 pb-16">
-            <Button
-              size="medium"
-              variant="point"
-              onClick={handleFinalApprove}
-              disabled={isPending}
-            >
-              {isPending ? "서명 전송 중..." : "최종 승인 및 서명 완료"}
-            </Button>
+            {isCompleted ? (
+              <Button size="medium" variant="point" onClick={() => navigate("/mypage/contract")}>
+                마이페이지로 돌아가기
+              </Button>
+            ) : (
+              <Button size="medium" variant="point" onClick={handleFinalApprove} disabled={isPending}>
+                {isPdfGenerating ? "계약서 변환 중..." : isPending ? "서명 전송 중..." : "최종 승인 및 서명 완료"}
+              </Button>
+            )}
           </div>
         </div>
       </main>

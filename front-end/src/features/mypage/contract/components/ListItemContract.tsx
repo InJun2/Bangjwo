@@ -109,7 +109,9 @@ const ListItemContract = ({ contract }: ListItemContractProps) => {
             variant="point"
             disabled={action.disabled}
             onClick={() => {
-              if (!action.disabled && action.path) navigate(action.path);
+              if (!action.disabled && action.path) {
+                navigate(action.path, { state: { role: contract.myRole, status: contract.contractStatus } });
+              }
             }}
           >
             {action.btnText}

@@ -1,16 +1,11 @@
 interface RentTypeSelectorProps {
   mode: "lessor" | "lessee";
-  value: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null;
-  onChange: (value: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY") => void;
+  value: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | string | null;
+  onChange: (value: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | string) => void;
 }
 
-// RentTypeSelector.tsx 내부 수정
 const RentTypeSelector = ({ mode, value, onChange }: RentTypeSelectorProps) => {
   const isLessee = mode === "lessee";
-
-  if (isLessee) {
-    value = "MONTHLY_WITH_DEPOSIT";
-  }
 
   const rentOptions = [
     { label: "보증금 있는 월세", value: "MONTHLY_WITH_DEPOSIT" as const },
@@ -41,9 +36,7 @@ const RentTypeSelector = ({ mode, value, onChange }: RentTypeSelectorProps) => {
             checked={value === option.value}
             onChange={() => !isLessee && onChange(option.value)}
             disabled={isLessee}
-            className={`
-            sr-only
-          `}
+            className="sr-only"
           />
           <div
             className={`

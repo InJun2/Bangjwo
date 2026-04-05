@@ -31,6 +31,7 @@ interface ContractProps {
   roomData?: RoomDetailDto;
   contractId?: number;
   isReadOnly?: boolean;
+  isCompleted?: boolean;
 }
 
 export interface RoomDetailDto {
@@ -49,6 +50,7 @@ interface FooterInfo {
   phone: string;
   name: string;
   moveInDate?: string;
+  signatureUrl?: string;
 }
 
 interface FooterState {
@@ -57,10 +59,12 @@ interface FooterState {
 }
 
 const Contract = forwardRef<ContractRefType, ContractProps>(
-  ({ mode, roomData, contractId, isReadOnly = false }, ref) => {
-    const [leaseType, setLeaseType] = useState<
-      "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null
-    >(null);
+  ({ mode, roomData, contractId, isReadOnly = false, isCompleted = false }, ref) => {
+    
+    // 🚀 모든 객관식 초기값을 null로 두어 '초록색 테두리' 활성화
+    const [leaseType, setLeaseType] = useState<string | null>(null);
+    const [contractType, setContractType] = useState<ContractType | null>(null);
+    const [monthlyRentType, setMonthlyRentType] = useState<MonthlyRentType | null>("선불" as any); // 요구사항: 선불 기본
 
     const [rentalPropertyAddress, setRentalPropertyAddress] = useState("");
     const [rentalPartAddress, setRentalPartAddress] = useState("");
@@ -72,11 +76,11 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [rentalPartDetailAddress, setRentalPartDetailAddress] = useState("");
     const [rentalPartArea, setRentalPartArea] = useState("");
 
-    const [contractType, setContractType] = useState<ContractType | null>(null);
-
+    // 🚀 동의/미동의 항목 초기값 null
     const [taxArrears, setTaxArrears] = useState<boolean | null>(null);
     const [priorityConfirmedDateYn, setPriorityConfirmedDateYn] = useState<boolean | null>(null);
 
+    // 🚀 금액 및 숫자 항목 초기값 "" (빈칸)
     const [depositAmount, setDepositAmount] = useState<number | "">("");
     const [contractFee, setContractFee] = useState<number | "">("");
     const [middleFee, setMiddleFee] = useState<number | "">("");
@@ -85,7 +89,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [balancePaymentDate, setBalancePaymentDate] = useState("");
     const [monthlyRent, setMonthlyRent] = useState<number | "">("");
     const [monthlyRentPaymentDate, setMonthlyRentPaymentDate] = useState("");
-    const [monthlyRentType, setMonthlyRentType] = useState<MonthlyRentType | null>(null);
+    
     const [monthlyRentAccountBank, setMonthlyRentAccountBank] = useState("");
     const [monthlyRentAccountNumber, setMonthlyRentAccountNumber] = useState("");
     const [fixedManagementFee, setFixedManagementFee] = useState<number | "">("");
@@ -103,19 +107,19 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [tenantBurden, setTenantBurden] = useState("");
 
     const [moveInRegistrationDate, setMoveInRegistrationDate] = useState("");
-    const [unpaidAmount, setUnpaidAmount] = useState(0);
-    const [disputeResolution, setDisputeResolution] = useState(false);
+    const [unpaidAmount, setUnpaidAmount] = useState<number | "">("");
+    const [disputeResolution, setDisputeResolution] = useState<boolean | null>(null);
     const [isHousingReconstructionPlanned, setIsHousingReconstructionPlanned] = useState<boolean | null>(null);
     const [isDetailedAddressConsentGiven, setIsDetailedAddressConsentGiven] = useState<boolean | null>(null);
     const [constructionPeriod, setConstructionPeriod] = useState("");
-    const [estimatedConstructionDuration, setEstimatedConstructionDuration] = useState(0);
+    const [estimatedConstructionDuration, setEstimatedConstructionDuration] = useState<number | "">("");
     const [etc, setEtc] = useState<string[]>([]);
 
     const [contractWrittenDate, setContractWrittenDate] = useState("");
 
     const [footerInfo, setFooterInfo] = useState<FooterState>({
-      lessor: { address: "", ssn: "", phone: "", name: "" },
-      lessee: { address: "", ssn: "", phone: "", name: "", moveInDate: "" },
+      lessor: { address: "", ssn: "", phone: "", name: "", signatureUrl: "" },
+      lessee: { address: "", ssn: "", phone: "", name: "", moveInDate: "", signatureUrl: "" },
     });
 
     const [signatureModalOpen, setSignatureModalOpen] = useState(false);
@@ -129,6 +133,13 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [finalSignature, setFinalSignature] = useState<string | null>(null);
 
     const handleSignClick = (role: "lessor" | "lessee") => {
+      if (isCompleted) return;
+      
+      if (!isReadOnly) {
+        alert("최종 서명은 모든 계약 내용을 작성하고 '등록 완료'를 누른 후,\n다음 [최종 확인 페이지]에서 진행할 수 있습니다.");
+        return;
+      }
+      
       setActiveSignatureType("final");
       setSignatureModalOpen(true);
     };
@@ -148,39 +159,69 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           const response = await axiosInstance.get(url);
           const data = response.data;
 
+          // 🚀 1. 백엔드에서 0으로 넘어오면 모조리 "" 로 쳐내는 파서
+          const parseNum = (val: any) => (val === 0 || val === "0" || !val) ? "" : Number(val);
+          const parseNumStr = (val: any) => (val === 0 || val === "0" || !val) ? "" : String(val);
+          
+          // 🚀 2. DB 기본값인 false가 넘어올 때, 작성된 적 없는 새 계약서면 전부 null 로 초기화하여 초록색 띠 생성!
+          const parseBool = (val: any) => {
+            if (val === true) return true;
+            if (val === false) {
+              return data.contractWrittenDate ? false : null;
+            }
+            return null;
+          };
+
           setRentalPropertyAddress(data.rentalPropertyAddress || "");
           setRentalPartAddress(data.rentalPartAddress || "");
           setRentalHousingLandType(data.rentalHousingLandType || "");
-          setRentalHousingLandArea(data.rentalHousingLandArea != null ? String(data.rentalHousingLandArea) : "");
           setPropertyStructure(data.propertyStructure || "");
           setPropertyPurpose(data.propertyPurpose || "");
-          setPropertyArea(data.propertyArea != null ? String(data.propertyArea) : "");
           setRentalPartDetailAddress(data.rentalPartDetailAddress || "");
-          setRentalPartArea(data.rentalPartArea != null ? String(data.rentalPartArea) : "");
+          
+          // 면적 0 방지
+          setRentalHousingLandArea(parseNumStr(data.rentalHousingLandArea));
+          setPropertyArea(parseNumStr(data.propertyArea));
+          setRentalPartArea(parseNumStr(data.rentalPartArea));
 
+          // 임대유형, 계약유형 강제 할당 방지 (null 유지)
           setContractType(data.contractType || null);
-          setTaxArrears(data.taxArrears ?? null);
-          setPriorityConfirmedDateYn(data.priorityConfirmedDateYn ?? null);
+          setMonthlyRentType(data.monthlyRentType || null);
+          let parsedLeaseType = data.leaseType;
+          if (parsedLeaseType === "MONTHLY_RENT" || parsedLeaseType === "JEONSE") {
+            parsedLeaseType = "MONTHLY_WITH_DEPOSIT";
+          }
+          setLeaseType(data.leaseType || null);
 
-          setDepositAmount(data.depositAmount ?? "");
-          setContractFee(data.contractFee ?? "");
-          setMiddleFee(data.middleFee ?? "");
-          setBalance(data.balance ?? "");
-          setMonthlyRent(data.monthlyRent ?? "");
-          setFixedManagementFee(data.fixedManagementFee ?? "");
-          setUnfixedManagementFee(data.unfixedManagementFee || "");
+          // 불리언 항목들 회색(false)으로 채워지는 현상 방지
+          setTaxArrears(parseBool(data.taxArrears));
+          setPriorityConfirmedDateYn(parseBool(data.priorityConfirmedDateYn));
+          setFacilitiesRepairStatus(parseBool(data.facilitiesRepairStatus));
+          setDisputeResolution(parseBool(data.disputeResolution));
+          setIsHousingReconstructionPlanned(parseBool(data.isHousingReconstructionPlanned));
+          setIsDetailedAddressConsentGiven(parseBool(data.isDetailedAddressConsentGiven));
+
+          // 금액 0 방지
+          setDepositAmount(parseNum(data.depositAmount));
+          setContractFee(parseNum(data.contractFee));
+          setMiddleFee(parseNum(data.middleFee));
+          setBalance(parseNum(data.balance));
+          setMonthlyRent(parseNum(data.monthlyRent));
+          setFixedManagementFee(parseNum(data.fixedManagementFee));
+          setUnpaidAmount(parseNum(data.unpaidAmount));
+          setEstimatedConstructionDuration(parseNum(data.estimatedConstructionDuration));
 
           setMonthlyRentAccountNumber(data.monthlyRentAccountNumber || "");
           setMonthlyRentAccountBank(data.monthlyRentAccountBank || "");
           setMonthlyRentPaymentDate(data.monthlyRentPaymentDate || "");
-          setMonthlyRentType(data.monthlyRentType || null);
+
+          setUnfixedManagementFee(data.unfixedManagementFee || "");
 
           setInterimPaymentDate(data.interimPaymentDate || "");
           setBalancePaymentDate(data.balancePaymentDate || "");
           setLeaseStartDate(data.leaseStartDate || null);
           setLeaseEndDate(data.leaseEndDate || "");
 
-          setFacilitiesRepairStatus(data.facilitiesRepairStatus ?? null);
           setFacilitiesRepairContent(data.facilitiesRepairContent || "");
           setRepairCompletionByBalanceDate(data.repairCompletionByBalanceDate || "");
           setRepairCompletionEtc(data.repairCompletionEtc || "");
@@ -190,39 +231,35 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           setTenantBurden(data.tenantBurden || "");
 
           setMoveInRegistrationDate(data.moveInRegistrationDate || "");
-          setUnpaidAmount(data.unpaidAmount ?? 0);
-          setDisputeResolution(data.disputeResolution ?? false);
-          setIsHousingReconstructionPlanned(data.isHousingReconstructionPlanned ?? null);
-          setIsDetailedAddressConsentGiven(data.isDetailedAddressConsentGiven ?? null);
           setConstructionPeriod(data.constructionPeriod || "");
-          setEstimatedConstructionDuration(data.estimatedConstructionDuration ?? 0);
           setEtc(data.etc || []);
           setContractWrittenDate(data.contractWrittenDate || "");
-          setLeaseType(data.leaseType || null);
 
-          const lessorData = data.landlordInfo || data;
-          const lesseeData = data.tenantInfo || data;
+          const lessorObj = data.landlordInfo || data.landlord || {};
+          const lesseeObj = data.tenantInfo || data.tenant || {};
 
           setFooterInfo((prev) => ({
             ...prev,
             lessor: {
-              address: data.landlordAddress || "",
-              ssn: data.residentRegistrationNumber || "",
-              phone: data.landlordPhone || "",
-              name: data.landlordName || "",
+              address: lessorObj.address || lessorObj.landlordAddress || data.landlordAddress || data.address || "",
+              ssn: lessorObj.residentRegistrationNumber || lessorObj.landlordResidentNumber || data.landlordResidentNumber || data.residentRegistrationNumber || "",
+              phone: lessorObj.phone || lessorObj.phoneNumber || lessorObj.landlordPhone || data.landlordPhone || data.phoneNumber || "",
+              name: lessorObj.name || lessorObj.landlordName || data.landlordName || data.name || "",
+              signatureUrl: lessorObj.landlordSignatureUrl4 || lessorObj.signatureUrl || data.landlordSignatureUrl4 || "",
             },
             lessee: {
-              address: lesseeData.address || lesseeData.tenantAddress || "",
-              ssn: lesseeData.residentRegistrationNumber || lesseeData.tenantResidentNumber || "",
-              phone: lesseeData.phone || lesseeData.tenantPhone || "",
-              name: lesseeData.name || lesseeData.tenantName || "",
-              moveInDate: lesseeData.moveInDate || "",
+              address: lesseeObj.address || lesseeObj.tenantAddress || data.tenantAddress || "",
+              ssn: lesseeObj.residentRegistrationNumber || lesseeObj.tenantResidentNumber || lesseeObj.tenantResidentRegistrationNumber || data.tenantResidentNumber || data.tenantResidentRegistrationNumber || "",
+              phone: lesseeObj.phone || lesseeObj.phoneNumber || lesseeObj.tenantPhone || data.tenantPhone || data.tenantPhoneNumber || "",
+              name: lesseeObj.name || lesseeObj.tenantName || data.tenantName || "",
+              moveInDate: lesseeObj.moveInDate || data.moveInDate || "",
+              signatureUrl: lesseeObj.tenantSignatureUrl || lesseeObj.signatureUrl || data.tenantSignatureUrl || "",
             },
           }));
 
-          setUnpaidTaxSignature(lessorData.landlordSignatureUrl1 || data.landlordSignatureUrl1 || null);
-          setPriorityDateSignature(lessorData.landlordSignatureUrl2 || data.landlordSignatureUrl2 || null);
-          setReceiptSignature(lessorData.landlordSignatureUrl3 || data.landlordSignatureUrl3 || null);
+          setUnpaidTaxSignature(lessorObj.landlordSignatureUrl1 || data.landlordSignatureUrl1 || null);
+          setPriorityDateSignature(lessorObj.landlordSignatureUrl2 || data.landlordSignatureUrl2 || null);
+          setReceiptSignature(lessorObj.landlordSignatureUrl3 || data.landlordSignatureUrl3 || null);
 
         } catch (error) {
           console.error(error);
@@ -233,6 +270,8 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     }, [roomData, contractId, mode]);
 
     const openSignatureModal = (type: "unpaid" | "priority" | "receipt") => {
+      if (isCompleted) return;
+
       if (type === "unpaid" || type === "priority" || type === "receipt") {
         setActiveSignatureType(type);
         setSignatureModalOpen(true);
@@ -249,70 +288,78 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
       }
       if (activeSignatureType === "final") {
         setFinalSignature(dataUrl);
+        setFooterInfo((prev) => ({
+          ...prev,
+          [mode]: { ...prev[mode], signatureUrl: dataUrl },
+        }));
       }
       setSignatureModalOpen(false);
     };
 
     useImperativeHandle(ref, () => ({
-      getFormData: (): UpdateLandlordInfoDto => ({
-        contractId: contractId || 0,
-        leaseType,
-        rentalPropertyAddress,
-        rentalPartAddress,
-        rentalHousingLandType,
-        rentalHousingLandArea: Number(rentalHousingLandArea),
-        propertyStructure,
-        propertyPurpose,
-        propertyArea: Number(propertyArea),
-        rentalPartDetailAddress,
-        rentalPartArea: Number(rentalPartArea),
-        contractType,
-        previousLeaseStartDate: "",
-        previousLeaseEndDate: "",
-        previousDepositAmount: 0,
-        previousMonthlyRent: 0,
-        taxArrears: taxArrears ?? false,
-        priorityConfirmedDateYn: priorityConfirmedDateYn ?? false,
-        depositAmount: Number(depositAmount) || 0,
-        contractFee: Number(contractFee) || 0,
-        middleFee: Number(middleFee) || 0,
-        interimPaymentDate,
-        balance: Number(balance) || 0,
-        balancePaymentDate,
-        monthlyRent: Number(monthlyRent) || 0,
-        monthlyRentPaymentDate,
-        monthlyRentType,
-        monthlyRentAccountBank,
-        monthlyRentAccountNumber,
-        fixedManagementFee: Number(fixedManagementFee) || 0,
-        unfixedManagementFee,
-        leaseStartDate: leaseStartDate ?? "",
-        leaseEndDate,
-        facilitiesRepairStatus: facilitiesRepairStatus ?? false,
-        facilitiesRepairContent,
-        repairCompletionByBalanceDate,
-        repairCompletionEtc,
-        notRepairedByBalanceDate,
-        notRepairedEtc,
-        landlordBurden,
-        tenantBurden,
-        moveInRegistrationDate,
-        unpaidAmount,
-        disputeResolution: disputeResolution ?? false,
-        isHousingReconstructionPlanned: isHousingReconstructionPlanned ?? false,
-        constructionPeriod,
-        estimatedConstructionDuration,
-        isDetailedAddressConsentGiven: isDetailedAddressConsentGiven ?? false,
-        etc,
-        contractWrittenDate,
-        address: footerInfo.lessor.address,
-        residentRegistrationNumber: footerInfo.lessor.ssn,
-        phoneNumber: footerInfo.lessor.phone,
-        name: footerInfo.lessor.name,
-        landlordSignatureUrl1: unpaidTaxSignature || "",
-        landlordSignatureUrl2: priorityDateSignature || "",
-        landlordSignatureUrl3: receiptSignature || "",
-      }),
+      getFormData: (): UpdateLandlordInfoDto => {
+        const formData = {
+          contractId: contractId || 0,
+          leaseType: leaseType as any,
+          rentalPropertyAddress,
+          rentalPartAddress,
+          rentalHousingLandType,
+          rentalHousingLandArea: rentalHousingLandArea ? Number(rentalHousingLandArea) : ("" as any),
+          propertyStructure,
+          propertyPurpose,
+          propertyArea: propertyArea ? Number(propertyArea) : ("" as any),
+          rentalPartDetailAddress,
+          rentalPartArea: rentalPartArea ? Number(rentalPartArea) : ("" as any),
+          contractType: contractType as any,
+          previousLeaseStartDate: "",
+          previousLeaseEndDate: "",
+          previousDepositAmount: 0,
+          previousMonthlyRent: 0,
+          taxArrears: taxArrears ?? ("" as any),
+          priorityConfirmedDateYn: priorityConfirmedDateYn ?? ("" as any),
+          depositAmount: depositAmount === "" ? ("" as any) : Number(depositAmount),
+          contractFee: contractFee === "" ? ("" as any) : Number(contractFee),
+          middleFee: middleFee === "" ? ("" as any) : Number(middleFee),
+          interimPaymentDate,
+          balance: balance === "" ? ("" as any) : Number(balance),
+          balancePaymentDate,
+          monthlyRent: monthlyRent === "" ? ("" as any) : Number(monthlyRent),
+          monthlyRentPaymentDate,
+          monthlyRentType: monthlyRentType as any,
+          monthlyRentAccountBank,
+          monthlyRentAccountNumber,
+          fixedManagementFee: fixedManagementFee === "" ? ("" as any) : Number(fixedManagementFee),
+          unfixedManagementFee,
+          leaseStartDate: leaseStartDate ?? "",
+          leaseEndDate,
+          facilitiesRepairStatus: facilitiesRepairStatus ?? ("" as any),
+          facilitiesRepairContent,
+          repairCompletionByBalanceDate,
+          repairCompletionEtc,
+          notRepairedByBalanceDate,
+          notRepairedEtc,
+          landlordBurden,
+          tenantBurden,
+          moveInRegistrationDate,
+          unpaidAmount: unpaidAmount === "" ? ("" as any) : Number(unpaidAmount),
+          disputeResolution: disputeResolution ?? ("" as any),
+          isHousingReconstructionPlanned: isHousingReconstructionPlanned ?? ("" as any),
+          constructionPeriod,
+          estimatedConstructionDuration: estimatedConstructionDuration === "" ? ("" as any) : Number(estimatedConstructionDuration),
+          isDetailedAddressConsentGiven: isDetailedAddressConsentGiven ?? ("" as any),
+          etc,
+          contractWrittenDate,
+          address: footerInfo.lessor.address,
+          residentRegistrationNumber: footerInfo.lessor.ssn,
+          phoneNumber: footerInfo.lessor.phone,
+          name: footerInfo.lessor.name,
+          landlordSignatureUrl1: unpaidTaxSignature || "",
+          landlordSignatureUrl2: priorityDateSignature || "",
+          landlordSignatureUrl3: receiptSignature || "",
+        };
+
+        return formData as UpdateLandlordInfoDto;
+      },
 
       getTenantFormData: (): UpdateTenantInfoDto => ({
         contractId: contractId || 0,
@@ -350,8 +397,8 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
                 lessee: { ...prev.lessee, name: val },
               }))
             }
-            leaseType={leaseType}
-            setLeaseType={setLeaseType}
+            leaseType={leaseType as any}
+            setLeaseType={setLeaseType as any}
           />
 
           <HouseInfoSection
@@ -370,8 +417,10 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
             buildingArea={propertyArea}
             leaseDetail={rentalPartDetailAddress}
             leaseArea={rentalPartArea}
+            
             unpaidTaxOption={taxArrears as any}
-            priorityDateOption={priorityConfirmedDateYn ? "exist" : "none"}
+            priorityDateOption={priorityConfirmedDateYn === null ? null : priorityConfirmedDateYn ? "exist" : "none"}
+            
             unpaidTaxSignature={unpaidTaxSignature}
             priorityDateSignature={priorityDateSignature}
             openSignatureModal={openSignatureModal}
@@ -393,9 +442,14 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
               }
             }}
             onOptionChange={(field, value) => {
-              if (field === "unpaidTaxOption") setTaxArrears(value === "exist");
-              if (field === "priorityDateOption")
-                setPriorityConfirmedDateYn(value === "exist");
+              const valStr = String(value);
+
+              if (field === "unpaidTaxOption") {
+                setTaxArrears(valStr === "true" || valStr === "exist");
+              }
+              if (field === "priorityDateOption") {
+                setPriorityConfirmedDateYn(valStr === "true" || valStr === "exist");
+              }
             }}
           />
 
@@ -509,14 +563,17 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
           contractWrittenDate={contractWrittenDate}
           setContractWrittenDate={setContractWrittenDate}
           isReadOnly={isReadOnly}
+          isCompleted={isCompleted}
           onSignClick={handleSignClick}
         />
 
-        <SignatureModal
-          isOpen={signatureModalOpen}
-          onClose={() => setSignatureModalOpen(false)}
-          onSave={handleSignatureSave}
-        />
+        {!isCompleted && (
+          <SignatureModal
+            isOpen={signatureModalOpen}
+            onClose={() => setSignatureModalOpen(false)}
+            onSave={handleSignatureSave}
+          />
+        )}
       </section>
     );
   }

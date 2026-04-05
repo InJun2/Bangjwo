@@ -11,10 +11,8 @@ interface ContractHeaderProps {
   lesseeName: string;
   onLessorNameChange: (value: string) => void;
   onLesseeNameChange: (value: string) => void;
-  leaseType: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null;
-  setLeaseType: React.Dispatch<
-    React.SetStateAction<"MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | null>
-  >;
+  leaseType: "MONTHLY_WITH_DEPOSIT" | "PURE_MONTHLY" | string | null;
+  setLeaseType: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const ContractHeader = ({
@@ -32,7 +30,8 @@ const ContractHeader = ({
   const waGwa = hasBatchim(safeLessorName) ? "과" : "와";
   const eunNeun = hasBatchim(safeLesseeName) ? "은" : "는";
   
-  const currentLeaseType = leaseType === null ? "MONTHLY_WITH_DEPOSIT" : leaseType;
+  // 🚀 강제 선택 로직 제거: null이 그대로 내려가야 초록색 테두리가 나옵니다.
+  const currentLeaseType = leaseType;
 
   return (
     <>
@@ -53,7 +52,7 @@ const ContractHeader = ({
         <span className="text-base font-bold whitespace-nowrap"></span>
         <RentTypeSelector
           mode={mode}
-          value={currentLeaseType}
+          value={currentLeaseType as any}
           onChange={setLeaseType}
         />
       </div>
@@ -62,7 +61,7 @@ const ContractHeader = ({
         <span>임대인</span>
         {mode === "lessor" ? (
           <EditableInputBox
-            value={lessorName} // 실제 데이터 바인딩
+            value={lessorName}
             onChange={onLessorNameChange}
             placeholder="성명"
             minLength={2}
@@ -79,7 +78,7 @@ const ContractHeader = ({
         <span>{waGwa} 임차인</span>
         {mode === "lessee" ? (
           <EditableInputBox
-            value={lesseeName} // 실제 데이터 바인딩
+            value={lesseeName}
             onChange={onLesseeNameChange}
             placeholder="성명"
             minLength={2}
