@@ -29,7 +29,7 @@ public enum ContractErrorCode implements ErrorCode {
 	INVALID_ROLE(HttpStatus.BAD_REQUEST, "CONTRACT4016", "유효하지 않은 계약 역할입니다."),
 	NO_AUTH_TO_ACCESS_LANDLORD(HttpStatus.FORBIDDEN, "CONTRACT4017", "임대인 본인인증 권한이 없습니다."),
 	NO_AUTH_TO_ACCESS_TENANT(HttpStatus.FORBIDDEN, "CONTRACT4018", "임차인 본인인증 권한이 없습니다."),
-	;
+	CONTRACT_COMPLETION_FAILED(HttpStatus.BAD_GATEWAY, "CONTRACT4019", "계약서 블록체인 저장에 실패하였습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

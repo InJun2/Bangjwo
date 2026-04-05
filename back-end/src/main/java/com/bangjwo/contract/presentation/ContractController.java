@@ -258,7 +258,7 @@ public class ContractController {
 	}
 
 	@Operation(
-		summary = "임대인 서명 이미지 등록",
+		summary = "임대인 최종 서명 이미지 등록",
 		description = "임차인 최종 조회 이후 임대인이 최종 조회 후 임대인 서명 이미지를 저장하여 계약을 완료합니다.",
 		security = @SecurityRequirement(name = "JWT")
 	)
@@ -297,18 +297,6 @@ public class ContractController {
 	) {
 		contractService.verifyContractMember(dto, memberId);
 
-		return ResponseEntity.noContent().build();
-	}
-
-	@Operation(
-		summary = "계약 확정",
-		description = "작성한 계약서를 IPFS, 블록체인에 저장합니다.",
-		security = @SecurityRequirement(name = "JWT")
-	)
-	@PatchMapping(path = "/complete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<Void> completeContract(@ModelAttribute CompleteDto completeDto,
-		@MemberHeader Long memberId) {    // 유저 로그인 정보 추가 필요
-		contractService.completeContract(completeDto, memberId);
 		return ResponseEntity.noContent().build();
 	}
 

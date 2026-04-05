@@ -2,12 +2,15 @@ package com.bangjwo.contract.application.service;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import com.bangjwo.blockchain.application.service.BlockchainService;
 import com.bangjwo.common.crypto.AESService;
@@ -224,16 +227,17 @@ public class ContractService {
 	@Transactional
 	public void updateLandlordSignatures(LandlordSignatureUpdateRequestDto dto, Long memberId) {
 		Contract contract = findContract(dto.getContractId());
+
 		Optional.of(contract.getLandlordId())
 			.filter(id -> id.equals(memberId))
 			.orElseThrow(() -> new BusinessException(ContractErrorCode.INVALID_CONTRACT_ACCESS));
 		Optional.of(contract.getContractStatus())
 			.filter(status -> status.equals(ContractStatus.TENANT_SIGNED))
 			.orElseThrow(() -> new BusinessException(ContractErrorCode.INVALID_CONTRACT_STATUS_FOR_LANDLORD_SIGNATURE));
-		LandlordInfo landlordInfo = contract.getLandlordInfo();
-		contractImageService.updateLastLandlordSignatures(landlordInfo, dto);
-		contract.updateContractStatus(ContractStatus.COMPLETED);
-		contract.getRoom().updateStatus(RoomStatus.SOLD_OUT);
+
+		contractImageService.updateLastLandlordSignatures(contract.getLandlordInfo(), dto);
+
+		executeEncryptionAndBlockchainRegistration(contract, dto.getPdfFile());
 	}
 
 	@Transactional
@@ -257,53 +261,43 @@ public class ContractService {
 			.orElseThrow(() -> new RoomException(ContractErrorCode.NOT_FOUND_CONTRACT));
 	}
 
-	@Transactional
-	public void completeContract(CompleteDto completeDto, long memberId) {
+	private void executeEncryptionAndBlockchainRegistration(Contract contract, MultipartFile pdfFile) {
 		try {
-			Contract contract = findContract(completeDto.getContractId());
-			if (!contract.getLandlordId().equals(memberId)) {
-				throw new BusinessException(ContractErrorCode.INVALID_CONTRACT_ACCESS);
-			}
-
-			// 1. AES 키 생성
 			SecretKey aesKey = aesService.generateAESKey();
-
-			// 2. AES 키를 RSA로 암호화
 			String encryptedAesKey = rsaService.encryptAesKey(aesKey);
 
-			// 3. PDF 파일을 AES로 암호화
-			MultipartFile file = completeDto.getFile();
-			byte[] pdfBytes = file.getBytes();
+			byte[] pdfBytes = pdfFile.getBytes();
 			byte[] encryptedPdf = aesService.encrypt(aesKey, pdfBytes);
-			String ipfsKey = pinataStorageService.uploadEncryptedPdf(encryptedPdf,
-				completeDto.getContractId());
+			String ipfsKey = pinataStorageService.uploadEncryptedPdf(encryptedPdf, contract.getContractId());
 			String encryptedIpfsKey = aesService.encryptToString(aesKey, ipfsKey);
-			System.out.println(encryptedIpfsKey);
 
-			// 4. 블록체인에 CID 저장 구현
-			var result = blockchainService.registerContract(BigInteger.valueOf(completeDto.getContractId()),
-				encryptedIpfsKey,
-				BigInteger.valueOf(completeDto.getLandlord()),
-				BigInteger.valueOf(completeDto.getTenant()));
-			if (result == null) {
+			CompletableFuture<TransactionReceipt> future = blockchainService.registerContract(
+				BigInteger.valueOf(contract.getContractId()),
+				ipfsKey,
+				BigInteger.valueOf(contract.getLandlordId()),
+				BigInteger.valueOf(contract.getTenantId())
+			);
+
+			TransactionReceipt receipt = future.get(30, TimeUnit.SECONDS);
+			if (receipt == null || !receipt.isStatusOK()) {
 				throw new BusinessException(BlockchainErrorCode.BLOCKCHAIN_REJECTED);
 			}
 
-			// 5. DB 업데이트
 			contract.updateAesKey(encryptedAesKey);
 			contract.updateIpfsKey(encryptedIpfsKey);
+			contract.updateContractStatus(ContractStatus.COMPLETED);
+			contract.getRoom().updateStatus(RoomStatus.SOLD_OUT);
+
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			log.error("[블록체인 등록 실패] Contract ID: {}", contract.getContractId(), e);
+			throw new BusinessException(ContractErrorCode.CONTRACT_COMPLETION_FAILED);
 		}
 	}
 
 	@Transactional(readOnly = true)
 	public byte[] getPdf(long contractId, long memberId) {
 		Contract contract = findContract(contractId);
-
-		if (!contract.getLandlordId().equals(memberId) && !contract.getTenantId().equals(memberId)) {
-			throw new BusinessException(ContractErrorCode.INVALID_CONTRACT_ACCESS);
-		}
+		validateUserAccess(contract, memberId);
 
 		try {
 			SecretKey aesKey = rsaService.decryptAesKey(contract.getAesKey());
@@ -311,8 +305,8 @@ public class ContractService {
 			byte[] encryptedFileData = pinataStorageService.getFileFromIpfs(ipfsKey);
 			return aesService.decrypt(aesKey, encryptedFileData);
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			return null;
+			log.error("[PDF 복호화 실패] Contract ID: {}", contractId, e);
+			throw new BusinessException(ContractErrorCode.CONTRACT_COMPLETION_FAILED);
 		}
 	}
 
@@ -355,10 +349,7 @@ public class ContractService {
 	@Transactional(readOnly = true)
 	public ContractVerificationStatusDto getVerificationStatus(Long contractId, Long memberId) {
 		var contract = findContract(contractId);
-
-		if (!contract.getTenantId().equals(memberId) && !contract.getTenantId().equals(memberId)) {
-			throw new BusinessException(ContractErrorCode.INVALID_CONTRACT_ACCESS);
-		}
+		validateUserAccess(contract, memberId);
 
 		return ContractConverter.convertContractVerify(contract);
 	}

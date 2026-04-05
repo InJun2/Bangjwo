@@ -21,4 +21,7 @@ public class LandlordSignatureUpdateRequestDto {
 	@Schema(description = "최종 서명", type = "string", format = "binary")
 	@NotEmptyMultipartFile
 	private MultipartFile signature4;
+
+	@NotNull(message = "최종 계약서 PDF 파일은 필수입니다.")
+	private MultipartFile pdfFile;
 }
