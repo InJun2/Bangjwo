@@ -271,6 +271,13 @@ public class ContractService {
 			String ipfsKey = pinataStorageService.uploadEncryptedPdf(encryptedPdf, contract.getContractId());
 			String encryptedIpfsKey = aesService.encryptToString(aesKey, ipfsKey);
 
+			contract.updateAesKey(encryptedAesKey);
+			contract.updateIpfsKey(encryptedIpfsKey);
+			contract.updateContractStatus(ContractStatus.COMPLETED);
+			contract.getRoom().updateStatus(RoomStatus.SOLD_OUT);
+
+			contractRepository.flush();
+
 			CompletableFuture<TransactionReceipt> future = blockchainService.registerContract(
 				BigInteger.valueOf(contract.getContractId()),
 				ipfsKey,
@@ -282,11 +289,6 @@ public class ContractService {
 			if (receipt == null || !receipt.isStatusOK()) {
 				throw new BusinessException(BlockchainErrorCode.BLOCKCHAIN_REJECTED);
 			}
-
-			contract.updateAesKey(encryptedAesKey);
-			contract.updateIpfsKey(encryptedIpfsKey);
-			contract.updateContractStatus(ContractStatus.COMPLETED);
-			contract.getRoom().updateStatus(RoomStatus.SOLD_OUT);
 
 		} catch (Exception e) {
 			log.error("[블록체인 등록 실패] Contract ID: {}", contract.getContractId(), e);
