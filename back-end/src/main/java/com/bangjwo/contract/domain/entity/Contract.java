@@ -79,7 +79,7 @@ public class Contract extends BaseEntity {
 	)
 	private SpecialClause specialClause;
 
-	@Column(nullable = false)
+	@Column(columnDefinition = "TEXT", nullable = false)
 	private String ipfsKey; // 암호화
 
 	@Column(columnDefinition = "TEXT", nullable = false)
