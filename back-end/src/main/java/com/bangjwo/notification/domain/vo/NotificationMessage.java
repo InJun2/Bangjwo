@@ -10,7 +10,7 @@ public enum NotificationMessage {
 	CHAT_REQUEST(
 		NotificationType.CHAT_REQUEST,
 		"임차인의 문의 요청이 있습니다. 채팅 내용을 확인해주세요.",
-		"/chat"
+		"/chat/%d"
 	),
 	LANDLORD_COMPLETED(
 		NotificationType.CONTRACT_STATUS,
@@ -20,12 +20,12 @@ public enum NotificationMessage {
 	TENANT_COMPLETED(
 		NotificationType.CONTRACT_STATUS,
 		"임차인이 계약서 확인을 완료했습니다. 계약을 승인해주세요.",
-		"/final-sign/%d/%d"
+		"/buyer-contract/%d/%d"
 	),
 	TENANT_SIGNED(
 		NotificationType.CONTRACT_STATUS,
 		"임차인이 서명을 완료했습니다. 최종 서명을 진행해주세요.",
-		"/final-sign/%d/%d"
+		"/seller-contract/%d/%d"
 	),
 	CONTRACT_COMPLETED(
 		NotificationType.CONTRACT_STATUS,
@@ -37,9 +37,9 @@ public enum NotificationMessage {
 	private final String message;
 	private final String urlTemplate;
 
-	public String formatUrl(Long roomId, Long contractId) {
-		if (this.urlTemplate.contains("%d")) {
-			return String.format(this.urlTemplate, roomId, contractId);
+	public String formatUrl(Object... args) {
+		if (args != null && args.length > 0 && this.urlTemplate.contains("%d")) {
+			return String.format(this.urlTemplate, args);
 		}
 		return this.urlTemplate;
 	}
