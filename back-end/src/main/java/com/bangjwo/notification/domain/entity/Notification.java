@@ -26,10 +26,18 @@ public class Notification {
 	@Builder.Default
 	private boolean isRead = false;
 
-	@CreatedDate
-	private LocalDateTime createdAt;
+	@Builder.Default
+	private LocalDateTime createdAt = LocalDateTime.now();
 
 	public void markAsRead() {
 		this.isRead = true;
+	}
+
+	public void markAsUnread() {
+		this.isRead = false;
+	}
+
+	public void updateCreatedAt(){
+		this.createdAt = LocalDateTime.now();
 	}
 }
