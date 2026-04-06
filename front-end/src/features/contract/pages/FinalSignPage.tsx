@@ -76,14 +76,26 @@ const FinalSignPage = () => {
           
           const pdf = new jsPDF("p", "mm", "a4");
           const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfPageHeight = pdf.internal.pageSize.getHeight();
 
           const elWidth = captureRef.current.offsetWidth;
           const elHeight = captureRef.current.offsetHeight;
-          const pdfHeight = (elHeight * pdfWidth) / elWidth;
+          const totalPdfHeight = (elHeight * pdfWidth) / elWidth;
+
+          let heightLeft = totalPdfHeight;
+          let position = 0;
+
+          pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, totalPdfHeight);
+          heightLeft -= pdfPageHeight;
+
+          while (heightLeft > 0) {
+            position -= pdfPageHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, totalPdfHeight);
+            heightLeft -= pdfPageHeight;
+          }
           
-          pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
           const pdfBlob = pdf.output("blob");
-          
           const pdfFile = new File([pdfBlob], `contract_${contractId}.pdf`, { type: "application/pdf" });
           
           formData.append("pdfFile", pdfFile); 

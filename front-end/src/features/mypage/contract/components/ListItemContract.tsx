@@ -4,6 +4,7 @@ import MaterialIcon from "../../../../components/MaterialIcon";
 import { useRoomNavigation } from "../../../../hooks/useRoomNavigation";
 import { RoomBuildingType } from "../../../../types/roomTypes";
 import { roomBuildingTypeLabel } from "../../../../utils/roomMapper";
+import ContractViewButton from "../../../contract/components/ContractViewButton";
 import { useNavigate } from "react-router-dom";
 
 interface ContractRoom {
@@ -104,18 +105,29 @@ const ListItemContract = ({ contract }: ListItemContractProps) => {
             </div>
           </div>
 
-          <Button 
-            size="small" 
-            variant="point"
-            disabled={action.disabled}
-            onClick={() => {
-              if (!action.disabled && action.path) {
-                navigate(action.path, { state: { role: contract.myRole, status: contract.contractStatus } });
-              }
-            }}
-          >
-            {action.btnText}
-          </Button>
+          <div className="flex gap-2 w-full justify-center mt-2">
+            {contract.contractStatus === "COMPLETED" && contract.contractId ? (
+              <ContractViewButton contractId={contract.contractId} />
+            ) : (
+              <button 
+                disabled={action.disabled}
+                onClick={() => {
+                  if (!action.disabled && action.path) {
+                    navigate(action.path, { state: { role: contract.myRole, status: contract.contractStatus } });
+                  }
+                }}
+                className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                  action.disabled 
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-300"
+                }`}
+              >
+
+                {action.btnText}
+              </button>
+            )}
+          </div>
+          
         </LineBox>
       </li>
     </>
