@@ -28,8 +28,6 @@ import RoomLocationMap from "../components/RoomLocationMap";
 import ModalPhoneCheck from "../../modal/pages/ModalPhoneCheck";
 import RoundedImage from "../../../components/RoundedImage";
 import MaterialIcon from "../../../components/MaterialIcon";
-import { useIamportPayment } from "../../registry/hooks/useIamportPayment";
-import { validatePayment } from "../../../apis/pay";
 import { useAuth } from "../../../contexts/AuthContext";
 import { handleRoomLike } from "../../../services/likeService";
 import ModalAlert from "../../modal/pages/ModalAlert";
@@ -154,7 +152,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
     "집 소개",
     "집 정보",
     "위치",
-    "등기부등본 · 위험도",
+    "등기부등본",
   ];
   const roomOptions: string[] =
     room?.options
@@ -240,51 +238,8 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
     };
   });
 
-  //등기사항전부증명서 결제 처리
-  const { requestPayment, scriptLoaded } = useIamportPayment();
   const handleClick = () => {
-    if (!accessToken) {
-      openModal("needLogin");
-      return;
-    }
-    if (!scriptLoaded) {
-      console.warn("결제 모듈이 아직 로딩되지 않았어요");
-      return;
-    }
-
-    requestPayment(
-      {
-        merchant_uid: `test_${Date.now()}`,
-        name: "테스트 상품",
-        amount: 100,
-        buyer_email: "test@example.com",
-        buyer_name: "홍길동",
-        buyer_tel: "01012345678",
-        buyer_addr: "서울시 테스트구",
-        buyer_postcode: "12345",
-      },
-      async (rsp) => {
-        console.log("결제 결과:", rsp);
-
-        if (rsp.success) {
-          console.log("✅ 결제 성공, imp_uid:", rsp.imp_uid);
-
-          const impUid = rsp.imp_uid;
-
-          try {
-            const validateData = await validatePayment(impUid);
-            console.log("아이디값");
-            console.log(validateData); //id
-            const newWindowUrl = `/registry/${validateData ?? ""}`;
-            window.open(newWindowUrl, "_blank");
-          } catch (validateError) {
-            console.log("Failed to verify payment:", rsp.error_msg);
-          }
-        } else {
-          console.log("Failed to pay:", rsp.error_msg);
-        }
-      }
-    );
+    window.open("https://www.iros.go.kr/index.jsp", "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -759,24 +714,22 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                   <div className="divider" />
 
                   <TabContent
-                    title="등기부등본 · 위험도"
+                    title="등기부등본"
                     ref={(el) => {
                       if (el) tabContentsRef.current[5] = el;
                     }}
                     scrollMarginTop={48 + tabMenuHeight}
                   >
-                    <InfoText text="등기부등본을 확인하기 위해서는 700원의 수수료가 필요합니다." />
+                    <InfoText text="부동산 권리 관계를 확인을 위해 반드시 등기사항증명서를 발급해주세요." />
+                    
                     <Button
                       size="large"
                       variant="point"
                       className="w-full"
-                      onClick={handleClick}
+                      onClick={handleClick} 
                     >
-                      [유료] 등기사항전부증명서·위험도 확인
+                      등기사항증명서 확인하러가기
                     </Button>
-                    {/* <Button size="large" className="w-full">
-                    지난 위험도 분석 결과 확인하기
-                  </Button> */}
                   </TabContent>
                 </div>
                 {/* box footer */}

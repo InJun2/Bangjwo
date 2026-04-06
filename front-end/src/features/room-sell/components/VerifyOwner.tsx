@@ -161,9 +161,9 @@ const VerifyOwner = () => {
           <div className="text-sm">본인 확인이 완료되었습니다.</div>
         )}
       </TitleBox>
-      <TitleBox title={`등기사항전부증명서 확인\n(구 등기부등본)`} required>
+      <TitleBox title={`수수료 결제`} required>
         <div className="mx-auto">
-          <InfoText text="700원의 수수료가 듭니다." />
+          <InfoText text="10원의 수수료가 듭니다." />
         </div>
         <div
           onClick={handlePaymentSubmit}
@@ -173,12 +173,12 @@ const VerifyOwner = () => {
               : "bg-gold"
           } flex flex-col p-2 items-center justify-center text-neutral-white font-bold text-lg rounded-md mx-auto`}
         >
-          <p>등기사항전부증명서</p>
-          <p>확인하기</p>
+          <p>수수료</p>
+          <p>결제하기</p>
         </div>
         {isCertificateVerified && (
           <div className="text-sm">
-            등가사항전부증명서의 확인이 완료되었습니다.
+            집 등록 수수료 결제가 완료되었습니다.
           </div>
         )}
       </TitleBox>

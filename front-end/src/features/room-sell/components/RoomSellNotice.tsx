@@ -14,7 +14,7 @@ const RoomSellNotice = () => {
       buttonText="계속 내놓으러 가기"
     >
       <div className="text-sm">
-        <p>집을 내놓으려면 수수료 700원과</p>
+        <p>집을 내놓으려면 수수료 10원과</p>
         <p>부동산 고유 번호가 필요합니다.</p>
       </div>
     </LayoutNotice>
