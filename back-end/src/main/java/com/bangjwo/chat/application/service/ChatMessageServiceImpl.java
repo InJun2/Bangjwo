@@ -16,6 +16,8 @@ import com.bangjwo.chat.domain.entity.ChatMessage;
 import com.bangjwo.chat.domain.repository.ChatMongoRepository;
 import com.bangjwo.global.common.error.chat.ChatErrorCode;
 import com.bangjwo.global.common.exception.BusinessException;
+import com.bangjwo.notification.application.NotificationService;
+import com.bangjwo.notification.domain.vo.NotificationMessage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 	private final ChatMongoRepository chatMongoRepository;
 	private final MongoTemplate mongoTemplate;
 	private final RedisChatRoomService redisChatRoomService;
+	private final NotificationService notificationService;
 
 	@Override
 	public void saveChatMessage(ChatMessageDto dto, boolean isReceiverOnline) {
@@ -44,6 +47,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 			ChatMessage chatMessage = ChatCoverter.create(dto, info, isReceiverOnline);
 			chatMongoRepository.save(chatMessage);
 			log.info("채팅 메시지 저장 성공");
+
+			if (!isReceiverOnline) {
+				notificationService.sendNotification(
+					info.getOtherId(),
+					NotificationMessage.CHAT_REQUEST,
+					dto.chatRoomId()
+				);
+			}
 		} catch (Exception e) {
 			log.error("채팅 메시지 저장 실패", e);
 			throw new BusinessException(ChatErrorCode.CHAT_MESSAGE_SAVE_FAILED);

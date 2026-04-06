@@ -46,7 +46,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
 					notificationService.sendNotification(
 						chatRequestDto.landlordId(),
-						NotificationMessage.CHAT_REQUEST
+						NotificationMessage.CHAT_REQUEST,
+						newRoom.getId()
 					);
 
 					return newRoom;

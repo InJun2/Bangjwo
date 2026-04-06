@@ -30,6 +30,7 @@ import com.bangjwo.chat.domain.entity.ChatAlert;
 import com.bangjwo.chat.infrastructure.WebSocketSessionTracker;
 import com.bangjwo.global.common.error.chat.ChatErrorCode;
 import com.bangjwo.global.common.exception.BusinessException;
+import com.bangjwo.notification.application.NotificationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -53,6 +54,7 @@ public class ChatRoomController {
 	private final RedisChatRoomService redisChatRoomService;
 	private final SimpMessagingTemplate messagingTemplate;
 	private final WebSocketSessionTracker webSocketSessionTracker;
+	private final NotificationService notificationService;
 	private final ObjectMapper objectMapper;
 
 	/*
@@ -110,6 +112,9 @@ public class ChatRoomController {
 
 		// Redis에 해당 채팅방 읽음 처리
 		redisChatRoomService.updateChatRoom(chatRoomId, userId);
+
+		String relatedUrl = "/chat/" + chatRoomId;
+		notificationService.markAsReadByUrl(userId, relatedUrl);
 
 		return ResponseEntity.ok(chatMessageService.getChatMessages(chatRoomId));
 	}
