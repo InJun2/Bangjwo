@@ -7,6 +7,7 @@ import HeaderNavItem from "./HeaderNavItem";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Toast from "../../features/toast/components/Toast"
+import { useNotification, NotificationItem } from "../../contexts/NotificationContext";
 
 interface HeaderProps {
   title?: string;
@@ -16,17 +17,27 @@ interface HeaderProps {
 const Header = ({ title, variant = "light" }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { unreadCount, notifications, markAsRead } = useNotification();
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isAuthMenuOpenMobile, setIsAuthMenuOpenMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const [isNotiMenuOpen, setIsNotiMenuOpen] = useState(false);
+  const [isNotiMenuOpenMobile, setIsNotiMenuOpenMobile] = useState(false);
+
   // 💡 1. 토스트 상태 추가
   const [toastMessage, setToastMessage] = useState("");
+
+  const authMenuRef = useRef<HTMLDivElement>(null);
+  const authMenuButtonRef = useRef<HTMLDivElement>(null);
+  const notiMenuRef = useRef<HTMLDivElement>(null);
+  const notiMenuButtonRef = useRef<HTMLDivElement>(null);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const allCloseMobile = () => {
     setIsMobileMenuOpen(false);
     setIsAuthMenuOpenMobile(false);
+    setIsNotiMenuOpenMobile(false);
   };
 
   const openChatWindow = () => {
@@ -45,8 +56,17 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
     }, 1500);
   };
 
-  const authMenuRef = useRef<HTMLDivElement>(null);
-  const authMenuButtonRef = useRef<HTMLDivElement>(null);
+  const handleNotificationClick = async (noti: NotificationItem) => {
+    await markAsRead(noti.id);
+    setIsNotiMenuOpen(false);
+    setIsNotiMenuOpenMobile(false);
+    
+    if (noti.relatedUrl.startsWith("/chat")) {
+      openChatWindow();
+    } else {
+      navigate(noti.relatedUrl); 
+    }
+  };
 
   // 💡 3. Axios의 401(만료) 신호를 수신하는 역할
   useEffect(() => {
@@ -74,6 +94,13 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
       ) {
         setIsAuthMenuOpen(false);
         setIsAuthMenuOpenMobile(false);
+      }
+
+      if (
+        notiMenuRef.current && !notiMenuRef.current.contains(event.target as Node) &&
+        notiMenuButtonRef.current && !notiMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsNotiMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -111,6 +138,40 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
 
                 {user ? (
                   <>
+                    <li className="relative flex items-center">
+                      <ButtonIcon 
+                        icon="notifications" 
+                        ref={notiMenuButtonRef} 
+                        onClick={() => setIsNotiMenuOpen(!isNotiMenuOpen)} 
+                      />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[0.65rem] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                      
+                      {/* 알림 드롭다운 내용 */}
+                      {isNotiMenuOpen && (
+                        <div ref={notiMenuRef} className="z-10 absolute right-0 top-[120%] w-[18rem] bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden">
+                          <div className="p-3 bg-gray-50 border-b font-bold text-sm text-gray-700">새로운 알림</div>
+                          <ul className="max-h-64 overflow-y-auto">
+                            {notifications.length === 0 ? (
+                              <li className="p-4 text-center text-sm text-gray-500">새로운 알림이 없습니다.</li>
+                            ) : (
+                              notifications.map((noti) => (
+                                <li 
+                                  key={noti.id} 
+                                  onClick={() => handleNotificationClick(noti)}
+                                  className="p-3 border-b border-gray-100 hover:bg-gold-light/20 cursor-pointer transition-colors"
+                                >
+                                  <p className="text-sm text-gray-800 line-clamp-2">{noti.message}</p>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
                     <li><ButtonIcon icon="chat" onClick={openChatWindow} /></li>
                     <li className="relative">
                       <ButtonIcon icon="account_circle" onClick={() => setIsAuthMenuOpen(!isAuthMenuOpen)} ref={authMenuButtonRef} />
@@ -143,6 +204,41 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
 
                 {user ? (
                   <>
+                    <li className="relative flex items-center justify-center">
+                      <ButtonIcon 
+                        icon="notifications" 
+                        onClick={() => setIsNotiMenuOpenMobile(!isNotiMenuOpenMobile)} 
+                        addClassName="w-fit h-fit m-auto"
+                      />
+                      
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 right-2 bg-red-500 text-white text-[0.65rem] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+
+                      {isNotiMenuOpenMobile && (
+                        <div className="z-10 absolute left-1/2 -translate-x-1/2 top-[120%] w-[18rem] bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden text-left">
+                          <div className="p-3 bg-gray-50 border-b font-bold text-sm text-gray-700">새로운 알림</div>
+                          <ul className="max-h-64 overflow-y-auto">
+                            {notifications.length === 0 ? (
+                              <li className="p-4 text-center text-sm text-gray-500">새로운 알림이 없습니다.</li>
+                            ) : (
+                              notifications.map((noti) => (
+                                <li 
+                                  key={noti.id} 
+                                  onClick={() => handleNotificationClick(noti)}
+                                  className="p-3 border-b border-gray-100 hover:bg-gold-light/20 cursor-pointer transition-colors"
+                                >
+                                  <p className="text-sm text-gray-800 line-clamp-2">{noti.message}</p>
+                                </li>
+                              ))
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </li>
+
                     <li><ButtonIcon icon="chat" onClick={openChatWindow} addClassName="w-fit h-fit m-auto" /></li>
                     <li>
                       <ButtonIcon icon="account_circle" onClick={() => setIsAuthMenuOpenMobile(true)} addClassName="w-fit h-fit m-auto" />

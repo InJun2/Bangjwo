@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 const SOCKET_URL = `${import.meta.env.VITE_API_BASE_URL}/chat`;
 
-export const connectSocket = (id: number | null, scrollRef: any) => {
+export const useConnectSocket = (id: number | null, scrollRef: any) => {
   const [stompClient, setStompClient] = useState<Stomp.Client | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const { chatRoom } = useChatStore();
@@ -54,7 +54,7 @@ export const connectSocket = (id: number | null, scrollRef: any) => {
     console.log("stomp", stomp);
 
     const headers = {
-      userId: "1",
+      userId: String(user?.sub || "0"),
       roomId: (id ?? 0).toString(),
     };
 

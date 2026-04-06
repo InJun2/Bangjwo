@@ -5,7 +5,7 @@ import MessageInputBox from "./MessageInputBox";
 import DateBadge from "./DateBadge";
 import SystemMessage from "./SystemMessage";
 import ContractActionButton from "./ContractActionButton";
-import { connectSocket } from "../../../utils/chatSocket";
+import { useConnectSocket } from "../../../utils/chatSocket";
 import { useChatStore } from "../../../store/chatStore";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useCreateContract } from "../../../apis/contract";
@@ -27,13 +27,41 @@ const ChatRoom = ({ chatId }: ChatRoomProps) => {
 
   const myId = Number(user?.sub);
 
-  const [messages, sendSocketMessage] = connectSocket(chatId, scrollRef);
+  const [messages, sendSocketMessage] = useConnectSocket(chatId, scrollRef);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (chatId === null || chatId === 0) return;
+
+    const handleUnload = () => {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const token = localStorage.getItem("accessToken");
+
+      fetch(`${baseUrl}/api/v1/chat/leave/${chatId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        keepalive: true
+      }).catch(console.error);
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      
+      axiosInstance.post(`/api/v1/chat/leave/${chatId}`)
+        .then(() => console.log(`채팅방 ${chatId} 퇴장 처리 완료`))
+        .catch(err => console.error("채팅방 퇴장 처리 실패:", err));
+    };
+  }, [chatId]);
 
   if (chatId === null || chatId === 0) {
     return (
