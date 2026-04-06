@@ -10,6 +10,8 @@ import com.bangjwo.chat.domain.entity.ChatRoom;
 import com.bangjwo.chat.domain.repository.ChatRoomRepository;
 import com.bangjwo.global.common.error.chat.ChatErrorCode;
 import com.bangjwo.global.common.exception.BusinessException;
+import com.bangjwo.notification.application.NotificationService;
+import com.bangjwo.notification.domain.vo.NotificationMessage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ChatRoomServiceImpl implements ChatRoomService {
 
 	private final ChatRoomRepository chatRoomRepository;
+	private final NotificationService notificationService;
 
 	@Override
 	public ChatRoomDto.ChatResponseDto requestClass(ChatRoomDto.ChatRequestDto chatRequestDto) {
@@ -32,7 +35,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 			// 존재하지 않으면 새로 생성
 			chatRoom = chatRoomOptional.orElseGet(() -> {
 				try {
-					return chatRoomRepository.saveAndFlush(ChatRoom.builder()
+					ChatRoom newRoom = chatRoomRepository.saveAndFlush(ChatRoom.builder()
 						.landlordId(chatRequestDto.landlordId())
 						.tenantId(chatRequestDto.tenantId())
 						.roomId(chatRequestDto.roomId())
@@ -40,6 +43,13 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 						.tenantUnreadCount(0L)
 						.createdAt(LocalDateTime.now())
 						.build());
+
+					notificationService.sendNotification(
+						chatRequestDto.landlordId(),
+						NotificationMessage.CHAT_REQUEST
+					);
+
+					return newRoom;
 				} catch (Exception e) {
 					log.error("채팅방 저장 실패", e);
 					throw new BusinessException(ChatErrorCode.CHAT_ROOM_SAVE_FAILED);

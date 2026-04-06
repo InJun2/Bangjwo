@@ -20,7 +20,6 @@ import com.bangjwo.contract.application.convert.ContractDetailConverter;
 import com.bangjwo.contract.application.convert.LandlordInfoConverter;
 import com.bangjwo.contract.application.convert.SpecialClauseConverter;
 import com.bangjwo.contract.application.convert.TenantInfoConverter;
-import com.bangjwo.contract.application.dto.request.CompleteDto;
 import com.bangjwo.contract.application.dto.request.CreateContractRequestDto;
 import com.bangjwo.contract.application.dto.request.LandlordSignatureUpdateRequestDto;
 import com.bangjwo.contract.application.dto.request.TenantSignatureUpdateRequestDto;
@@ -48,6 +47,8 @@ import com.bangjwo.global.common.lock.RedisLock;
 import com.bangjwo.global.common.util.VerificationUtil;
 import com.bangjwo.member.application.service.MemberService;
 import com.bangjwo.member.domain.entity.Member;
+import com.bangjwo.notification.application.NotificationService;
+import com.bangjwo.notification.domain.vo.NotificationMessage;
 import com.bangjwo.portone.application.dto.IdentityDto;
 import com.bangjwo.portone.application.service.VerificationService;
 import com.bangjwo.room.application.service.RoomService;
@@ -70,6 +71,7 @@ public class ContractService {
 	private final RSAService rsaService;
 	private final PinataStorageService pinataStorageService;
 	private final BlockchainService blockchainService;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public Contract validateLandlordDraftContract(Long contractId, Long landlordId) {
@@ -164,6 +166,8 @@ public class ContractService {
 		SpecialClauseConverter.updateFinal(contract.getSpecialClause(), dto);
 		contractImageService.updateLandlordSignatures(contract.getLandlordInfo(), dto);
 		contract.updateContractStatus(ContractStatus.LANDLORD_COMPLETED);
+		notificationService.sendNotification(contract.getTenantId(), NotificationMessage.LANDLORD_COMPLETED,
+			contract.getRoom().getRoomId(), contract.getContractId());
 	}
 
 	@Transactional(readOnly = true)
@@ -188,6 +192,8 @@ public class ContractService {
 		TenantInfo tenantInfo = contract.getTenantInfo();
 		TenantInfoConverter.updateFinal(tenantInfo, requestDto);
 		contract.updateContractStatus(ContractStatus.TENANT_COMPLETED);
+		notificationService.sendNotification(contract.getLandlordId(), NotificationMessage.TENANT_COMPLETED,
+			contract.getRoom().getRoomId(), contract.getContractId());
 	}
 
 	@Transactional(readOnly = true)
@@ -236,8 +242,8 @@ public class ContractService {
 			.orElseThrow(() -> new BusinessException(ContractErrorCode.INVALID_CONTRACT_STATUS_FOR_LANDLORD_SIGNATURE));
 
 		contractImageService.updateLastLandlordSignatures(contract.getLandlordInfo(), dto);
-
 		executeEncryptionAndBlockchainRegistration(contract, dto.getPdfFile());
+		notificationService.sendNotification(contract.getTenantId(), NotificationMessage.CONTRACT_COMPLETED);
 	}
 
 	@Transactional
@@ -253,6 +259,8 @@ public class ContractService {
 		TenantInfo tenantInfo = contract.getTenantInfo();
 		contractImageService.updateTenantSignature(tenantInfo, requestDto);
 		contract.updateContractStatus(ContractStatus.TENANT_SIGNED);
+		notificationService.sendNotification(contract.getLandlordId(), NotificationMessage.TENANT_SIGNED,
+			contract.getRoom().getRoomId(), contract.getContractId());
 	}
 
 	@Transactional(readOnly = true)
