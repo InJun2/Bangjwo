@@ -24,8 +24,12 @@ public class NotificationController {
 	private final NotificationService notificationService;
 
 	@GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public SseEmitter subscribe(@MemberHeader Long memberId) {
-		return notificationService.subscribe(memberId);
+	public ResponseEntity<SseEmitter> subscribe(@MemberHeader Long memberId) {
+		SseEmitter emitter = notificationService.subscribe(memberId);
+		return ResponseEntity.ok()
+			.header("X-Accel-Buffering", "no")
+			.header("Cache-Control", "no-cache")
+			.body(emitter);
 	}
 
 	@GetMapping("/unread")

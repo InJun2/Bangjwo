@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -41,6 +42,32 @@ public class NotificationService {
 	@Async
 	public void sendNotification(Long receiverId, NotificationMessage message) {
 		saveAndSend(receiverId, message, message.getUrlTemplate());
+	}
+
+	@Async
+	public void sendNotification(Long receiverId, NotificationMessage message, Long chatRoomId) {
+		String finalUrl = message.formatUrl(chatRoomId);
+
+		Optional<Notification> existingNoti = notificationRepository
+			.findFirstByReceiverIdAndRelatedUrlOrderByCreatedAtDesc(receiverId, finalUrl);
+
+		if (existingNoti.isPresent()) {
+			Notification noti = existingNoti.get();
+			noti.markAsUnread();
+			noti.updateCreatedAt();
+			notificationRepository.save(noti);
+
+			broadcast(receiverId, message, finalUrl);
+			return;
+		}
+
+		saveAndSend(receiverId, message, finalUrl);
+	}
+	private void broadcast(Long receiverId, NotificationMessage message, String finalUrl) {
+		long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(receiverId);
+		String eventData = String.format("{\"message\":\"%s\", \"url\":\"%s\", \"unreadCount\":%d}",
+			message.getMessage(), finalUrl, unreadCount);
+		sendToClient(receiverId, message.getType().name(), eventData);
 	}
 
 	@Async
@@ -86,5 +113,14 @@ public class NotificationService {
 			notification.markAsRead();
 			notificationRepository.save(notification);
 		});
+	}
+
+	public void markAsReadByUrl(Long receiverId, String relatedUrl) {
+		notificationRepository.findFirstByReceiverIdAndRelatedUrlOrderByCreatedAtDesc(receiverId, relatedUrl)
+			.ifPresent(notification -> {
+				notification.markAsRead();
+				notificationRepository.save(notification);
+				log.info("채팅방 입장으로 인한 알림 읽음 처리 완료 (URL: {})", relatedUrl);
+			});
 	}
 }
