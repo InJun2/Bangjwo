@@ -4,7 +4,7 @@ import MypageNav from "../components/MypageNav";
 
 const PageMy = () => {
   return (
-    <LayoutTitle title="Mypage">
+    <LayoutTitle title="MYPAGE">
       <MypageNav />
       <div className="w-full py-[2.125rem]">
         <Outlet />

@@ -19,6 +19,7 @@ const PageHome = () => {
     useState<RoomBuildingType>("ONEROOM_TWOROOM");
 
   const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("token");
 
   const goToLogin = () => {
     navigate("/login");
@@ -165,9 +166,11 @@ const PageHome = () => {
                   <span className="text-8xl font-black">방 줘!</span>
                 </Button>
               </div>
-              <Button variant="dark" onClick={goToLogin}>
-                로그인/회원가입하러 가기
-              </Button>
+              {!isLoggedIn && (
+                <Button variant="dark" onClick={goToLogin}>
+                  로그인/회원가입하러 가기
+                </Button>
+              )}
             </div>
           </motion.div>
         )}
