@@ -158,3 +158,21 @@ export function useFinalizeTenantSignature() {
       }).then(res => res.data),
   });
 }
+
+export const fetchContractPdf = async (contractId: number) => {
+  try {
+    const response = await axiosInstance.get(`/api/v1/contract/${contractId}`, {
+      responseType: "blob", 
+    });
+
+    const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+    
+    const pdfUrl = window.URL.createObjectURL(pdfBlob);
+    
+    return pdfUrl;
+  } catch (error) {
+    console.error("PDF 조회 실패:", error);
+    alert("계약서를 불러오는데 실패했습니다.");
+    return null;
+  }
+};
