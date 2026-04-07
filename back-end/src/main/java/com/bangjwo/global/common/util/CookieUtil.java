@@ -8,8 +8,7 @@ public class CookieUtil {
 		Cookie cookie = new Cookie(name, value);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
-		cookie.setHttpOnly(false);
-		// cookie.setSecure(false); // 이후 운영에서는 변경 https
+		// cookie.setSecure(true); // 💡 나중에 HTTPS 적용 시 주석 해제
 		cookie.setMaxAge(maxAge);
 		response.addCookie(cookie);
 	}
