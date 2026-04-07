@@ -39,17 +39,21 @@ public class JwtTokenProvider {
 			.compact();
 	}
 
-	public String createRefreshToken() {
+	public String createRefreshToken(Long memberId) {
 		return Jwts.builder()
-			.setSubject(UUID.randomUUID().toString())
+			.setSubject(String.valueOf(memberId))
 			.setIssuedAt(new Date())
 			.setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiry))
 			.signWith(SignatureAlgorithm.HS256, secretKey)
 			.compact();
 	}
 
-	public void validateToken(String token) {
+	public void validateRefreshToken(String token) {
 		try {
+			if (token == null) {
+				throw new BusinessException(AuthErrorCode.INVALID_AUTHORIZATION_REFRESH_TOKEN);
+			}
+
 			Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
 		} catch (JwtException e) {
 			throw new BusinessException(AuthErrorCode.INVALID_AUTHORIZATION_TOKEN);
