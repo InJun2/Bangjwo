@@ -1,25 +1,32 @@
 package com.bangjwo.global.common.util;
 
+import org.springframework.http.ResponseCookie;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class CookieUtil {
 	public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-		Cookie cookie = new Cookie(name, value);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		// cookie.setSecure(true); // 💡 나중에 HTTPS 적용 시 주석 해제
-		cookie.setMaxAge(maxAge);
-		response.addCookie(cookie);
+		ResponseCookie cookie = ResponseCookie.from(name, value)
+			.path("/")
+			.sameSite("None")
+			.secure(true)
+			.httpOnly(true)
+			.maxAge(maxAge)
+			.build();
+
+		response.addHeader("Set-Cookie", cookie.toString());
 	}
 
 	public static void deleteRefreshToken(HttpServletResponse response) {
-		Cookie cookie = new Cookie("refreshToken", null);
-		cookie.setMaxAge(0);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		// cookie.setSecure(false); // 이후 운영에서는 변경 https
+		ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+			.path("/")
+			.sameSite("None")
+			.secure(true)
+			.httpOnly(true)
+			.maxAge(0)
+			.build();
 
-		response.addCookie(cookie);
+		response.addHeader("Set-Cookie", cookie.toString());
 	}
 }
