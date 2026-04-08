@@ -124,6 +124,18 @@ services:
     networks:
       - bangjwo-network
 
+
+  bangjwo-ai:
+    build: ../bangjwo-ai
+    container_name: bangjwo-ai
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    networks:
+      - bangjwo-network
+
 #  apm-server:
 #    image: docker.elastic.co/apm/apm-server:8.17.4
 #    container_name: apm-server
