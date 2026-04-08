@@ -39,6 +39,7 @@ jobs:
       - name: Create .env file
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
 
       - name: Copy .env to AWS
         uses: appleboy/scp-action@v0.1.4
