@@ -86,7 +86,7 @@ services:
       - bangjwo-network
 
   bangjwo:
-    build: .
+    image: ${DOCKER_USERNAME}/bangjwo-backend:latest
     container_name: bangjwo
     logging:
       driver: "json-file"
