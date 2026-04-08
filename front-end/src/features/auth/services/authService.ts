@@ -1,4 +1,9 @@
+import axiosInstance from "../../../utils/axiosInstances";
 import { deleteAccount, postKakaoAuth } from "../apis/auth";
+
+export const postLogoutOurService = () => {
+  return axiosInstance.post("/api/v1/logout");
+};
 
 export const loginWithKakao = async (
   code: string,
@@ -25,5 +30,14 @@ export const leaveOurService = async () => {
   } catch (err) {
     console.error("회원 탈퇴 실패:", err);
     throw err;
+  }
+};
+
+export const logoutOurService = async () => {
+  try {
+    await postLogoutOurService();
+    console.log("백엔드 로그아웃(토큰 삭제) 완료");
+  } catch (err) {
+    console.error("백엔드 로그아웃 실패:", err);
   }
 };

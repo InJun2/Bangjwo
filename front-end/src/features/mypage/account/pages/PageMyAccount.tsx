@@ -10,6 +10,7 @@ import { getMyProfile } from "../services/accountService";
 import Toast from "../../../toast/components/Toast";
 import RoundedImage from "../../../../components/RoundedImage";
 import { runIdentityVerification } from "../../../verify/utils/verify";
+import { logoutOurService } from "../../../auth/services/authService";
 
 const PageAccount = () => {
   const { accessToken, logout } = useAuth();
@@ -100,13 +101,15 @@ const PageAccount = () => {
       </LineBox>
       <LineBox addClassName="w-full">
         <button 
-          onClick={() => {
-            setToastMessage("로그아웃 중입니다."); 
+          onClick={async () => {
+            setToastMessage("로그아웃 중입니다.");
+            
+            await logoutOurService();
             
             setTimeout(() => {
-              logout();
+              logout(); 
             }, 1500);
-          }} 
+          }}
           className="cursor-pointer"
         >
           로그아웃하기

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Toast from "../../features/toast/components/Toast"
 import { useNotification, NotificationItem } from "../../contexts/NotificationContext";
+import { logoutOurService } from "../../features/auth/services/authService";
 
 interface HeaderProps {
   title?: string;
@@ -45,11 +46,12 @@ const Header = ({ title, variant = "light" }: HeaderProps) => {
     allCloseMobile();
   };
 
-  // 💡 2. 수동 로그아웃 핸들러: 토스트 띄우고 1.5초 뒤 이동
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setToastMessage("로그아웃 중입니다.");
     allCloseMobile();
     setIsAuthMenuOpen(false);
+    
+    await logoutOurService();
     
     setTimeout(() => {
       logout();
