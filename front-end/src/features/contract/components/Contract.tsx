@@ -132,7 +132,7 @@ const Contract = forwardRef<ContractRefType, ContractProps>(
     const [receiptSignature, setReceiptSignature] = useState<string | null>(null);
     const [finalSignature, setFinalSignature] = useState<string | null>(null);
 
-    const handleSignClick = (role: "lessor" | "lessee") => {
+    const handleSignClick = () => {
       if (isCompleted) return;
       
       if (!isReadOnly) {

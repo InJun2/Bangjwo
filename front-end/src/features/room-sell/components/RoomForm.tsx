@@ -26,7 +26,7 @@ import {
 import { openAddressSearch } from "../../../utils/openAddressSearch";
 import InputButton from "../../../components/InputButton";
 import { RoomSellCreateContext } from "../pages/PageRoomSellCreate";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import Textarea from "../../../components/TextArea";
 import {
   createRoom,

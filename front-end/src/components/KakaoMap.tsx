@@ -103,7 +103,7 @@ const KakaoMap = ({
       const dropdown = document.createElement("div");
       dropdown.className = "absolute bottom-[100%] mb-1 hidden flex-col bg-white rounded-lg shadow-lg border border-neutral-200 overflow-hidden z-[9999] min-w-[120px]";
       
-      group.forEach((r, index) => {
+      group.forEach((r) => {
         const item = document.createElement("div");
         item.className = "px-3 py-2 text-sm text-neutral-800 hover:bg-neutral-100 border-b border-neutral-100 last:border-none text-center font-medium";
         item.innerText = `${r.deposit / 10000}/${r.monthlyRent / 10000} (방 번호: ${r.roomId})`;
