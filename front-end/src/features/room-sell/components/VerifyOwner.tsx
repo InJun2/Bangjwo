@@ -102,8 +102,6 @@ const VerifyOwner = () => {
           },
           async (rsp: any) => {
             if (rsp.success) {
-              alert("결제 성공! imp_uid: " + rsp.imp_uid);
-
               const impUid = rsp.imp_uid;
               const formData = new FormData();
               formData.append("impUid", impUid);

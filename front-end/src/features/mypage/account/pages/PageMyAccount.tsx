@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/buttons/Button";
 import LineBox from "../../../../components/LineBox";
 import { useAuth } from "../../../../contexts/AuthContext";
@@ -15,7 +14,6 @@ import { logoutOurService } from "../../../auth/services/authService";
 const PageAccount = () => {
   const { accessToken, logout } = useAuth();
   const { isOpen, openModal, closeModal } = useModal();
-  const navigate = useNavigate();
   const [nickname, setNickname] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [isAuth, setIsAuth] = useState(false);
