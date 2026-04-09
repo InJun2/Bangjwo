@@ -193,7 +193,8 @@ app = FastAPI(root_path="/ai")
 
 origins = [
     "http://localhost:5173",
-    "https://j12a404.p.ssafy.io"
+    "https://bangjwo.site",
+    "https://www.bangjwo.site"
 ]
 
 app.add_middleware(
