@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `contract`
     `tenant_info_id`    BIGINT                                                                                        NOT NULL UNIQUE,
     `special_clause_id` BIGINT                                                                                        NOT NULL UNIQUE,
     `ipfs_key`          VARCHAR(255)                                                                                  NOT NULL,
-    `aes_key`           VARCHAR(255)                                                                                  NOT NULL,
+    `aes_key`           TEXT                                                                                          NOT NULL,
     `contract_status`   ENUM ('BEFORE_WRITE', 'LANDLORD_COMPLETED', 'TENANT_COMPLETED', 'TENANT_SIGNED', 'COMPLETED') NOT NULL,
     `landlord_auth`     BOOLEAN                                                                                       NOT NULL,
     `tenant_auth`       BOOLEAN                                                                                       NOT NULL,
