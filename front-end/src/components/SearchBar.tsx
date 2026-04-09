@@ -1,6 +1,6 @@
 import { ChangeEvent, KeyboardEvent, useState } from "react";
 import MaterialIcon from "./MaterialIcon";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getLatLngFromKeyword, loadKakaoMapScript } from "../utils/kakaoMap";
 import Toast from "../features/toast/components/Toast";
 
@@ -15,6 +15,7 @@ interface SearchBarProps {
 
 const SearchBar = ({ category }: SearchBarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
@@ -25,8 +26,12 @@ const SearchBar = ({ category }: SearchBarProps) => {
       await loadKakaoMapScript();
       const { lat, lng } = await getLatLngFromKeyword(searchQuery);
       const path = category ? `/room/find/${category}` : `/room/find`;
-      const queryParams = `?lat=${lat}&lng=${lng}`;
-      navigate(`${path}${queryParams}`);
+      const urlParams = new URLSearchParams(location.search);
+
+      urlParams.set("lat", String(lat));
+      urlParams.set("lng", String(lng));
+
+      navigate(`${path}?${urlParams.toString()}`);
     } catch (err) {
       setToastMessage("검색 결과가 없습니다.");
       console.error("Failed to search address:", err);
