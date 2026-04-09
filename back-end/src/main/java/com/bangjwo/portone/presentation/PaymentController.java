@@ -57,7 +57,7 @@ public class PaymentController {
 		Map<String, Object> response = new HashMap<>();
 		response.put("merchant_uid", merchantUid);
 		response.put("amount", amount);
-		response.put("product_name", "등기부등본 조회");
+		response.put("product_name", "방줘 집 내놓기 수수료 결제");
 
 		return ResponseEntity.ok(response);
 	}
