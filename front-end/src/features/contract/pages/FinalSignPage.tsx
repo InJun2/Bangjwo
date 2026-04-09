@@ -29,10 +29,11 @@ const FinalSignPage = () => {
   const navigate = useNavigate();
   const { contractId } = useParams();
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
 
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
-  const roleFromState = location.state?.role;
+  const roleFromState = location.state?.role || queryParams.get("role");
   const statusFromState = location.state?.status;
 
   const currentMode = roleFromState === "LANDLORD" ? "lessor" : "lessee";
