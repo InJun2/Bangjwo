@@ -20,12 +20,12 @@ public enum NotificationMessage {
 	TENANT_COMPLETED(
 		NotificationType.CONTRACT_STATUS,
 		"임차인이 계약서 확인을 완료했습니다. 임차인이 최종 승인까지 기다려주세요.",
-		"/seller-contract/%d/%d"
+		"/buyer-contract/%d/%d"
 	),
 	TENANT_SIGNED(
 		NotificationType.CONTRACT_STATUS,
 		"임차인이 서명을 완료했습니다. 최종 서명을 진행해주세요.",
-		"/final-sign/%d/%d"
+		"/final-sign/%d/%d?role=LANDLORD"
 	),
 	CONTRACT_COMPLETED(
 		NotificationType.CONTRACT_STATUS,
