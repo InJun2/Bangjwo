@@ -66,6 +66,7 @@ const FinalSignPage = () => {
             quality: 0.8, 
             pixelRatio: 1.5, 
             backgroundColor: '#ffffff',
+            skipFonts: true,
             filter: (node: HTMLElement) => {
               if (node.tagName === 'LINK' && (node as HTMLLinkElement).href.includes('fonts.googleapis.com')) {
                 return false;

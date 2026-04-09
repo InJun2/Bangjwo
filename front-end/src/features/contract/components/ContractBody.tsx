@@ -293,7 +293,7 @@ const ContractBody = ({
             } ${isEditable ? "cursor-pointer" : "cursor-not-allowed"}`}
           >
             {receiptSignature ? (
-              <img src={receiptSignature} alt="서명" className="h-full object-contain" />
+              <img src={receiptSignature} crossOrigin="anonymous" alt="서명" className="h-full object-contain" />
             ) : null}
           </div>
           <span className="text-sm font-medium">(인)</span>

@@ -160,7 +160,7 @@ const ContractFooterSection = ({
                           : "border-neutral-light200 bg-white cursor-pointer hover:bg-neutral-light100 text-neutral-black font-bold"}`}
                   >
                     {signatureUrl ? (
-                      <img src={signatureUrl} alt="서명 이미지" className="w-full h-full object-contain" />
+                      <img src={signatureUrl} crossOrigin="anonymous" alt="서명 이미지" className="w-full h-full object-contain" />
                     ) : (
                       signatureEditable ? "최종 확인 후 서명" : "서명 불가 (최종 단계용)"
                     )}
