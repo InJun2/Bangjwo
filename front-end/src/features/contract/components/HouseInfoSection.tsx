@@ -328,7 +328,7 @@ const HouseInfoSection = ({
                   : "border-neutral-light100 bg-neutral-light200"
               } ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              {unpaidTaxSignature ? <img src={unpaidTaxSignature} alt="서명" className="h-full object-contain" /> : null}
+              {unpaidTaxSignature ? <img src={unpaidTaxSignature} crossOrigin="anonymous" alt="서명" className="h-full object-contain" /> : null}
             </div>
             (인) )
           </label>
@@ -380,7 +380,7 @@ const HouseInfoSection = ({
                   : "border-neutral-light100 bg-neutral-light200"
               } ${isLessee ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              {priorityDateSignature ? <img src={priorityDateSignature} alt="서명" className="h-full object-contain" /> : null}
+              {priorityDateSignature ? <img src={priorityDateSignature} crossOrigin="anonymous" alt="서명" className="h-full object-contain" /> : null}
             </div>
             (인) )
           </label>

@@ -30,6 +30,7 @@ const PageRoomFind = () => {
     const zoom = urlParams.get("zoom");
     const roomId = urlParams.get("roomId");
     const areaTypes = urlParams.get("areaTypes");
+    const price = urlParams.get("price");
 
     setParams((prevParams) => ({
       ...prevParams,
@@ -37,6 +38,7 @@ const PageRoomFind = () => {
       lng: lng ? parseFloat(lng) : prevParams.lng,
       zoom: zoom ? parseInt(zoom, 10) : prevParams.zoom,
       buildingType: category ?? "ONEROOM_TWOROOM",
+      price: price ? parseInt(price, 10) : undefined,
       areaTypes: areaTypes ? (areaTypes as AreaType) : null,
     }));
 
@@ -66,6 +68,19 @@ const PageRoomFind = () => {
     queryFn: () => getRooms(params),
     enabled: !!params.lat && !!params.lng,
   });
+
+  const handleRoomSelect = (roomId: number) => {
+    setSelectedRoomId(roomId);
+    
+    const selectedRoom = data?.items?.find((room) => room.roomId === roomId);
+    if (selectedRoom) {
+      setParams((prev) => ({
+        ...prev,
+        lat: selectedRoom.lat,
+        lng: selectedRoom.lng,
+      }));
+    }
+  };
 
   const handleApplyFilters = (filters: {
     price: number;
@@ -114,7 +129,7 @@ const PageRoomFind = () => {
             <ListRoom
               listClassName="flex-1 overflow-y-auto"
               rooms={data?.items || []}
-              onSelectRoom={(roomId) => setSelectedRoomId(roomId)}
+              onSelectRoom={handleRoomSelect}
             />
           )}
         </div>
@@ -150,7 +165,7 @@ const PageRoomFind = () => {
         }}
         rooms={data?.items}
 
-        onRoomClick={(roomId) => setSelectedRoomId(roomId)}
+        onRoomClick={handleRoomSelect}
       />
     </div>
   );
