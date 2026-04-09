@@ -118,7 +118,6 @@ public class UpdateLandlordInfoDto {
 	private Integer middleFee;
 
 	@Schema(description = "중도금 지급일", example = "2025-04-15")
-	@NotNull(groups = FinalSave.class)
 	private LocalDate interimPaymentDate;
 
 	@Schema(description = "잔금", example = "10000000")
