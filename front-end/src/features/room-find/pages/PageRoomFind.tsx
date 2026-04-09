@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getRooms } from "../../../services/roomService";
 import {
   AreaType,
@@ -39,7 +39,7 @@ const PageRoomFind = () => {
       zoom: zoom ? parseInt(zoom, 10) : prevParams.zoom,
       buildingType: category ?? "ONEROOM_TWOROOM",
       price: price ? parseInt(price, 10) : undefined,
-      areaTypes: areaTypes ? (areaTypes as AreaType) : null,
+      areaTypes: areaTypes ? (areaTypes as any) : undefined,
     }));
 
     if (roomId) {
@@ -67,6 +67,7 @@ const PageRoomFind = () => {
     queryKey: ["rooms", params],
     queryFn: () => getRooms(params),
     enabled: !!params.lat && !!params.lng,
+    placeholderData: keepPreviousData,
   });
 
   const handleRoomSelect = (roomId: number) => {
@@ -112,8 +113,10 @@ const PageRoomFind = () => {
           <FilterPannel
             childrenTop={<SearchBar />}
             childrenBottom={<InfoText text="'방줘'에는 월세만 있습니다." />}
-            selectedPrice={0}
-            selectedAreaTypes={[]}
+            selectedPrice={params.price || 0}
+            selectedAreaTypes={
+              params.areaTypes ? (String(params.areaTypes).split(",") as AreaType[]) : []
+            }
             onApplyFilters={handleApplyFilters}
           />
 
