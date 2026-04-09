@@ -406,6 +406,7 @@ const ContractBody = ({
             onChange={setMonthlyRentAccountNumber}
             placeholder="하이픈(-) 없이 숫자만 입력해주세요"
             customWidth="w-[400px]"
+            maxLength={30}
           />
         ) : (
           <DisabledInputBox
