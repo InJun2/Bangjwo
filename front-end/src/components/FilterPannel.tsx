@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import FilterBar from "./FilterBar";
 import FilterChip from "./FilterChip";
 import Slider from "./Slider";
@@ -36,6 +36,11 @@ const FilterPannel = ({
   ];
 
   const [price, setPrice] = useState(selectedPrice);
+
+  useEffect(() => {
+    setPrice(selectedPrice);
+    setSelectedFilters(selectedAreaTypes || []);
+  }, [selectedPrice, selectedAreaTypes]);
 
   const handlePriceChange = (newPrice: number) => {
     setPrice(newPrice);

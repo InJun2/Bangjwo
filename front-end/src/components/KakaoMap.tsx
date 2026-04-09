@@ -62,7 +62,7 @@ const KakaoMap = ({
         Math.abs(currentCenter.getLat() - lat) > 0.0001 ||
         Math.abs(currentCenter.getLng() - lng) > 0.0001
       ) {
-        mapInstance.current.setCenter(newCenter);
+        mapInstance.current.panTo(newCenter);
       }
     }
   }, [lat, lng]);
