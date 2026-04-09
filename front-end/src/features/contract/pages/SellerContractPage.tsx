@@ -61,11 +61,10 @@ const SellerContractPage = () => {
         key === "contractId"
       ) return;
 
-      // 🚀 수정됨: value !== "" 조건을 빼서, 문자열 빈칸("")은 정상적으로 백엔드에 전송합니다!
       if (value !== null && value !== undefined) {
         
-        // 단, 숫자 필드인데 빈칸("")이거나 "0"인 경우는 전송하지 않음 (타입/유효성 에러 방지)
-        if (numberFields.includes(key) && (value === "" || value === 0 || value === "0")) {
+        // 단, 숫자 필드인데 빈칸("")인 경우는 전송하지 않음 (타입/유효성 에러 방지)
+        if (numberFields.includes(key) && value === "") {
           return;
         }
 
