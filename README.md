@@ -13,24 +13,78 @@
 - 계약서 작성이 어려울 땐 AI 챗봇이 도와드립니다.
 - 계약은 블록체인에 기록되어 위변조 걱정 없이 투명하게!
 
-## 시스템 아키텍처처
+- BE 4명, FE 2명으로 구성되어 진행하였으며 저는 로그인 및 회원 기능, 매물 기능 및 계약 기능을 담당하였습니다.
+- 개인적으로 프로젝트를 추가 진행하여 마무리 지었고, AWS Lightsail, Vercel을 활용하여 배포, 호스팅 하였습니다.
 
-<p align="center">
-  <img src="./images/bangjwo_architecture.png" alt="Architecture Diagram" width="600"/>
-</p>
+### - [방줘 사이트 링크](https://bangjwo.site)
+
+<br>
+
+## 시스템 아키텍처
+
+![아키텍처](./images/bangjwo-architecture.png)
 
 ---
 
 ## ⚙️ 기술 스택
 
-| 분야 | 기술 |
-|------|------|
-| **Frontend** | React, Typescript, TailwindCSS, TanStack Query |
-| **Backend** | Spring Boot, Spring Data JPA |
-| **Database** | MySQL, Redis, MongoDB, AWS S3 |
-| **Infrastructure** | AWS EC2, Docker, Nginx |
-| **Blockchain** | Remix, Truffle, Solidity, Web3.0 |
-| **AI** | OpenAI API (GPT 기반 챗봇) |
+✅ Backend (Main - Spring)
+
+- Java, Spring Boot: 메인 비즈니스 로직 및 REST API 서버 구축
+- Spring Data JPA: RDBMS 데이터베이스 ORM 제어
+- OAuth2: 카카오 소셜 로그인 및 JWT 기반 인가/인증
+- Webflux: 비동기 논블로킹 통신
+- SSE: 또는 SSE 실시간 통신
+- Swagger : 프론트엔드와의 협업을 위한 API 명세서 자동화
+
+<br>
+
+✅ Backend (AI - Python)
+- Python, FastAPI: 가볍고 빠른 AI 전용 마이크로서비스(API) 구축
+- LangChain, OpenAI API: GPT-4o-mini 모델을 활용한 RAG(검색 증강 생성) 챗봇 파이프라인 구축
+
+<br>
+
+✅ Frontend
+- React, Vite: 사용자 UI 구축 및 프론트엔드 빌드 환경 구성
+- Vercel: 프론트엔드 무중단 호스팅 및 자동 배포
+
+<br>
+
+✅ Database
+- MySQL (8.0): 회원, 매물, 계약 등 핵심 관계형 데이터 영구 저장
+- MongoDB (7.0): 채팅 내역, 리뷰 등 스키마가 유연한 비정형 데이터 저장
+- Redis (7.0): Refresh Token 관리 및 빠른 데이터 캐싱
+- ChromaDB: 부동산 법령 및 특약사항 검색 (AI RAG 용도)
+
+<br>
+
+✅ BlockChain / Web3
+- Solidity: 이더리움/폴리곤 네트워크 기반의 부동산 스마트 컨트랙트 작성
+- INFURA: 직접 노드를 구축하지 않고 블록체인 네트워크와 통신하기 위한 노드 프로바이더
+- PINATA: 계약서 원본 파일의 무결성을 보장하기 위한 IPFS(분산 파일 시스템) 업로드
+
+<br>
+
+✅ Infra & DevOps
+- AWS Lightsail: 가성비 높은 단일 가상 서버(VPS) 호스팅
+- AWS S3: 매물 사진, 프로필, 계약 사인 등 무거운 일반 이미지 파일 스토리지
+- Docker, Docker Compose: Nginx, Spring, Python, DB 등 모든 환경을 컨테이너화하여 일관성 유지
+- GitHub Actions: 메인 브랜치 푸시 시 자동 빌드 및 Docker Hub를 거친 CI/CD 파이프라인 구축
+- Nginx: 리버스 프록시, SSL 인증 처리 및 포트 라우팅
+
+<br>
+
+✅ Logging & Monitoring
+- ELK Stack (Elasticsearch, Logstash, Kibana): 분산된 서버(Spring, Nginx)의 로그를 중앙 집중화하여 수집하고 시각화 대시보드 구축
+
+<br>
+
+✅ External APIs
+- Kakao Maps API: 부동산 매물 위치 지도 시각화
+- PortOne: 사용자 본인인증 및 매물 등록 수수료 결제 처리
+
+<br><br>
 
 ---
 
@@ -70,6 +124,26 @@
    - 챗봇 연동을 통한 용어/조항 실시간 설명
    - 사용자 중심의 직관적 계약서 작성 환경
 
+<br>
+
+## 담당한 기능
+
+📑 회원 기능
+- 카카오 소셜 로그인
+- 회원가입, 회원 정보 수정/조회
+- 마이페이지 조회 (매물/계약/결제 내역 등)
+- 포트원 본인인증
+
+📑 매물 기능
+- 매물 등록/ 필터링 조회
+- 카카오 장소 API 매물 주소 조회
+
+📑 계약 기능
+- 계약서 생성/수정/조회 및 동시성 제어
+- 포트원 결제 및 내역 조회
+
+<br>
+
 ## Figma
 
 <p align="center">
@@ -87,19 +161,6 @@
 </p>
 
 ---
-
-## 🙋 팀원 소개
-
-| 이름 | 역할 | 담당 |
-|------|------|------|
-| 김범준 | PM, Backend, Infra | 일정관리, 채팅/포트원, 서버 |
-| 강현지 | Frontend | 계약서/채팅/챗봇, 영상 제작 |
-| 백지민 | Frontend | 메인페이지/매물/회원/Info |
-| 강보영 | AI | OpenAI 챗봇 시스템 |
-| 하정수 | Backend, BlockChain | 블록체인, 계약/암호화 |
-| 황인준 | Backend | 환경설정, 매물/회원/로그인 |
-
-<br>
 
 ## 서버 트러블 슈팅
 
@@ -244,6 +305,90 @@ Hibernate:
 
 <br>
 
+### 4-4. Web3 기반 계약서 무결성 보장 및 저장 비용 최적화
+
+### 문제 상황
+- 부동산 계약서의 특성상 위변조가 절대 불가능해야 함
+- 그러나 모든 계약 데이터를 블록체인 메인넷에 직접 저장(On-chain)할 경우 가스비(수수료)가 과도하게 발생하고 대용량 문서 처리가 어려움
+
+### 해결 방안
+- IPFS(Pinata)와 블록체인(Polygon)을 결합한 하이브리드 저장 방식 도입
+- 계약이 성사되면 계약서 원본 파일(JSON/PDF)을 Pinata를 통해 분산 파일 시스템인 IPFS에 업로드하고, 파일 내용 기반의 암호화된 고유 해시값인 **CID(Content ID)**를 발급받음.
+- 용량이 큰 원본 데이터는 오프체인 분산저장소(IPFS)에 보관하고, 데이터의 위변조 여부를 증명할 수 있는 'CID 값'만을 폴리곤 스마트 컨트랙트에 기록(On-chain)하도록 분리 설계
+
+### 결과
+- 온체인 트랜잭션 데이터 크기를 최소화하여 블록체인 저장 비용(가스비)을 90% 이상 획기적으로 절감
+- 블록체인 탐색기(Polygonscan)를 통해 누구나 계약의 CID를 대조하여 위변조 여부를 검증(Trustless)할 수 있는 안전한 신뢰 기반 계약 시스템 구축
+
+<br>
+
+### 4-5. 분산 서버 환경(Spring & Python)에서의 로그 통합 모니터링 구축
+
+### 문제 상황
+- 비즈니스 로직을 처리하는 메인 서버(Spring Boot)와 AI 연산을 담당하는 서버(FastAPI)가 분리된 마이크로서비스 형태를 띠고 있음
+- 시스템 장애나 사용자의 AI 챗봇 요청 실패 시, 각 컨테이너(Spring, Python, Nginx)에 개별적으로 접속하여 로그를 뒤져야 하는 병목이 발생하여 원인 파악 및 대응(MTTR)이 지연됨
+
+### 해결 방안
+- ELK Stack(Elasticsearch, Logstash, Kibana) 기반의 중앙 집중형 로깅 아키텍처 설계
+- Logstash: Nginx, Spring Boot, FastAPI에서 발생하는 로그를 TCP/UDP 포트로 수집
+- Elasticsearch: 수집된 대용량 로그 데이터를 인덱싱하여 실시간 검색 가능하도록 적재
+- Kibana: 대시보드를 구축하여 API 에러율, AI 응답 지연 시간 등을 시각화
+
+### 결과
+- 특정 에러 발생 시 전체 서비스 흐름(Nginx -> BE -> AI)을 한눈에 추적(Tracing)할 수 있게 되어, 평균 장애 복구 시간(MTTR)을 대폭 단축
+- 다만, 현재 운영 중인 가성비 Lightsail 서버 환경에서는 RAM 메모리 부족(OOM) 방지를 위해 리소스 최적화 차원에서 ELK 컨테이너는 일시적으로 비활성화하여 유연하게 인프라를 운영 중
+
+<br>
+
+### 4-6. SSE(Server-Sent Events)를 활용한 실시간 알림 및 Nginx 버퍼링 이슈 해결
+
+### 문제 상황
+- 임대인/임차인이 계약서를 수정하거나 채팅이 왔을 때, 맞은편 유저에게 실시간으로 알려주어야 함
+- 양방향 통신인 WebSocket은 연결 유지 비용(Overhead)이 커서, 서버에서 클라이언트로 단방향 데이터만 쏴주면 되는 알림 기능에는 **SSE(Server-Sent Events)**가 적합하다고 판단하여 도입
+- 그러나 로컬 환경과 달리 배포 환경(Nginx)에서는 알림이 즉시 오지 않고, 일정 시간 모였다가 한 번에 와르르 쏟아지는 지연 전송 현상 발생
+
+### 해결 방안
+- Nginx의 Reverse Proxy 버퍼링 동작 방식이 원인임을 파악 (Nginx는 기본적으로 응답을 버퍼에 모았다가 꽉 차면 클라이언트에 전달함)
+- Nginx 설정에 proxy_buffering off, proxy_cache off 및 X-Accel-Buffering: no 헤더를 추가하여 서버에서 생성된 이벤트를 클라이언트에 즉시 스트리밍하도록 수정
+
+### 결과
+- 클라이언트가 의미 없이 서버를 찌르는 폴링(Polling) 방식을 피하여 서버 자원을 최소화하면서도, 알림 발생 후 평균 100ms 이내에 즉각적으로 도달하는 실시간 알림 시스템 구축 성공
+
+<br>
+
+### 4-7. Redis를 활용한 JWT Refresh Token 관리 및 보안 강화
+### 문제 상황
+- JWT(Access Token) 기반 인증 체계에서 Access Token 탈취 위험을 줄이기 위해 수명이 긴 Refresh Token을 도입함
+- 토큰 검증 시마다 RDBMS를 조회하면 디스크 I/O가 발생하여 전체적인 인증 API 성능이 저하 우려
+- 또한, 누군가 Refresh Token마저 탈취하여 악용할 경우를 대비한 2차 방어 로직이 부재했음
+
+### 해결 방안
+- Redis(In-memory DB) 기반 캐싱 전략 도입하여 빠른 읽기/쓰기가 가능한 Redis에 memberId를 Key로 하여 Refresh Token을 저장. Redis의 TTL 기능을 활용해 토큰 만료 시 자동 삭제되도록 구현
+- RTR(Refresh Token Rotation) 적용으로 사용자가 Access Token 재발급을 요청할 때마다 기존의 Refresh Token을 폐기하고 새로운 Refresh Token을 발급하여 탈취된 토큰의 지속적인 악용을 차단
+- 요청으로 들어온 기존 Refresh Token과 Redis에 저장된 토큰 값이 일치하지 않을 경우, 비정상적인 접근(탈취 의심)으로 간주하여 Redis에서 해당 유저의 토큰 정보를 즉시 강제 삭제 (이로 인해 탈취자와 실제 사용자 모두 로그아웃 처리되어 추가 피해 방지)
+
+### 결과
+- In-memory 기반 검증으로 토큰 재발급 및 인증 속도를 극대화(50ms 이하 유지)함과 동시에, 토큰 탈취 시나리오까지 방어하는 강력한 로그인 보안 체계 구축
+
+<br>
+
+### 4-7. CI/CD 자동화 파이프라인 구축 및 서버 메모리 부족(OOM) 이슈 해결
+
+### 문제 상황
+- 변경된 코드를 매번 수동으로 빌드하고 서버에 전송하여 컨테이너를 재시작하는 과정에서 번거로움과 휴먼 에러 발생 위험 존재
+- 자동화를 위해 가성비 위주의 단일 가상 서버(AWS Lightsail) 내부에서 무거운 Spring Boot 빌드 및 여러 개의 컨테이너(Spring, Python, MySQL, MongoDB, Redis 등)를 동시에 띄우려다 보니 RAM 용량 한계로 서버가 뻗어버리는(OOM - Out Of Memory) 현상 발생
+
+### 해결 방안
+- GitHub Actions & Docker Hub 연동: 서버 내부에서 직접 빌드하지 않고, GitHub Actions 러너 환경에서 소스 코드를 빌드한 뒤 Docker Image로 말아서 Docker Hub에 푸시하도록 파이프라인을 분리하여 서버의 CPU/RAM 부담을 최소화
+- 배포 스크립트 작성: 애플 서버(Lightsail)에 SSH로 접속해 최신 이미지만 Pull 받고 docker-compose up -d로 덮어쓰도록 배포 자동화
+- Swap Memory 할당: 물리적 RAM 부족을 보완하기 위해 리눅스 디스크 공간을 활용하여 4GB의 Swap Memory를 추가 할당하여 다수 컨테이너 실행 시의 안정성 확보 (과도한 자원을 요구하는 ELK 컨테이너는 환경에 맞춰 유연하게 비활성화 처리)
+
+### 결과
+- main 브랜치 푸시 시 빌드부터 배포까지 전 과정이 자동으로 이루어져 개발자는 비즈니스 로직 구현에만 집중할 수 있는 환경 구축
+- OOM 현상 없이 무거운 서비스들을 단일 가상 서버 내에서 안정적으로 구동하는 자원 최적화 및 인프라 운영 능력 확보
+
+<br><br>
+
 ## 화면 구성
 
 ### 1. 카카오 로그인
@@ -260,21 +405,24 @@ Hibernate:
 
 <br>
 
-### 3. 매물 조회 및 등기부등본 위험도 분석
+### 3. 매물 조회
 
-![매물 조회](./images/contract-risk.gif)
+![매물 조회](./images/room-search.png)
 
 <br>
 
-### 4. 문의 채팅
+### 4. 문의 채팅 / 알림
 
 ![계약 문의 채팅](./images/chat.gif)
+
+![계약 문의 알림](./images/noti.png)
+
+![계약 문의 채팅](./images/chat.png)
 
 <br>
 
 ### 5. 계약서 작성
-
-![임대인 계약서 작성](./images/landlord-contract.gif)
+![계약서 작성](./images/contract.png)
 
 <br>
 
@@ -287,3 +435,9 @@ Hibernate:
 ### 7. 마이페이지
 
 ![마이페이지](./images/mypage.gif)
+
+<br>
+
+### 7. 계약서 조회
+
+![계약서조회](./img/contract-end.png)
