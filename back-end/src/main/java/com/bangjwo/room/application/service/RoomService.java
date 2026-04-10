@@ -302,25 +302,25 @@ public class RoomService {
 
 	private BigDecimal calculateDeltaByZoom(Integer zoom) {
 		if (zoom == null) {
-			zoom = 3;
+			zoom = 4;
 		}
 
 		return switch (zoom) {
-			case 1 -> BigDecimal.valueOf(0.00061);
-			case 2 -> BigDecimal.valueOf(0.00122);
-			case 3 -> BigDecimal.valueOf(0.00245);
-			case 4 -> BigDecimal.valueOf(0.00490);
-			case 5 -> BigDecimal.valueOf(0.00980);
-			case 6 -> BigDecimal.valueOf(0.01960);
-			case 7 -> BigDecimal.valueOf(0.03920);
-			case 8 -> BigDecimal.valueOf(0.07839);
-			case 9 -> BigDecimal.valueOf(0.15679);
-			case 10 -> BigDecimal.valueOf(0.31366);
-			case 11 -> BigDecimal.valueOf(0.62721);
-			case 12 -> BigDecimal.valueOf(1.25495);
-			case 13 -> BigDecimal.valueOf(2.51151);
-			case 14 -> BigDecimal.valueOf(5.03561);
-			default -> BigDecimal.valueOf(0.00245);
+			case 1 -> BigDecimal.valueOf(0.00200);
+			case 2 -> BigDecimal.valueOf(0.00400);
+			case 3 -> BigDecimal.valueOf(0.00800);
+			case 4 -> BigDecimal.valueOf(0.01500);
+			case 5 -> BigDecimal.valueOf(0.03000);
+			case 6 -> BigDecimal.valueOf(0.06000);
+			case 7 -> BigDecimal.valueOf(0.12000);
+			case 8 -> BigDecimal.valueOf(0.24000);
+			case 9 -> BigDecimal.valueOf(0.48000);
+			case 10 -> BigDecimal.valueOf(0.96000);
+			case 11 -> BigDecimal.valueOf(1.92000);
+			case 12 -> BigDecimal.valueOf(3.84000);
+			case 13 -> BigDecimal.valueOf(7.68000);
+			case 14 -> BigDecimal.valueOf(15.00000);
+			default -> BigDecimal.valueOf(0.01500);
 		};
 	}
 
