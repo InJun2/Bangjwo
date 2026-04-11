@@ -16,7 +16,7 @@ public class CorsConfig {
 		config.setAllowCredentials(true);
 		// config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
 		config.setAllowedOrigins(List.of(
-			"https://bangjwo.site", "https://www.bangjwo.site", "https://bangjwo.vercel.app"));
+			"https://bangjwo.site", "https://www.bangjwo.site", "https://bangjwo.vercel.app", "http://localhost:5173"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		config.setExposedHeaders(List.of("Authorization"));
