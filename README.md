@@ -346,6 +346,192 @@ Hibernate:
 
 <br>
 
+#### nginx.conf 파일
+```nginx
+events {
+    # Nginx가 한 번에 맺을 수 있는 최대 연결 수
+    worker_connections 1024;
+}
+
+http {
+    # Nginx가 파일에 로그를 쓰지 않고, 네트워크(syslog)를 통해 logstash(50000번 포트)로 던짐
+    # tag를 달아서 "정상 접속(nginx_access)", "에러(nginx_error)" 라고 이름표를 지정
+    access_log syslog:server=logstash:50000,tag=nginx_access;
+    error_log syslog:server=logstash:50000,tag=nginx_error;
+
+    server {
+        # listen: "귀를 기울이다"
+        # Nginx 컨테이너 내부에서 80번 문을 열고 손님(웹 요청)이 오기를 기다림
+        listen 80;
+
+        # [송장 새로 붙이기: add_header] (방향: Nginx -> 브라우저)
+        # 스프링이 허락하든 말든, Nginx가 브라우저에게 "CORS 통과" 스티커를 강제로 붙여서 보냄
+        # 어떤 주소(localhost, 127.0.0.1 등)에서 오든 다 통과시켜 줍니다 ($http_origin).
+        add_header 'Access-Control-Allow-Origin' '$http_origin' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE, PATCH' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        # AI 서버로 가는 /ai/ 로 시작하는 요청
+        location /ai/ {
+            # 브라우저의 찔러보기(OPTIONS) 요청은 백엔드 안 거치고 바로 OK(204) 응답
+            if ($request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # 요청을 도커 내부의 bangjwo-ai 컨테이너 5000번 포트로 넘김
+            proxy_pass http://bangjwo-ai:5000/;
+            # AI 서버가 깐깐하게 굴지 않도록, 브라우저에서온 출처(Origin) 정보를 싹 지움 -> AI 서버가 요청을 내부 서버에서 온걸로 착각하게 함
+            proxy_set_header Origin "";
+        }
+
+        # Spring Boot 백엔드로 가는 요청
+        location / {
+            if ($request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            # [기존 송장 찢어버리기: proxy_hide_header] (방향: 백엔드 -> Nginx)
+            # 스프링이 자기가 만든 CORS 스티커를 붙여서 보내면, Nginx가 프론트로 주기 전에 몰래 떼어버림 (중복 에러 방지)
+            proxy_hide_header 'Access-Control-Allow-Origin';
+            proxy_hide_header 'Access-Control-Allow-Credentials';
+
+            # 요청을 도커 내부의 bangjwo(스프링) 컨테이너 8080번 포트로 넘김
+            proxy_pass http://bangjwo:8080;
+
+            # [보내는 사람 정보 조작: proxy_set_header] (방향: Nginx -> 백엔드)
+            # 스프링의 CORS 403 에러를 막기 위해 Origin(출처) 송장을 빈칸("")으로 지움  -> 스프링 서버가 요청을 내부 서버에서 온걸로 착각하게 함
+            proxy_set_header Origin "";
+
+            # Nginx를 거치면 원래 접속자의 IP를 잃어버리므로, 진짜 손님의 IP($remote_addr)를 따로 적어서 스프링에게 넘김
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            # SSE 등에서 데이터가 막히지 않도록 버퍼(캐시)를 끔
+            proxy_buffering off;
+            proxy_cache off;
+        }
+    }
+}
+```
+
+<br>
+
+#### logstash.conf 설정
+
+```ruby
+input {
+  # Nginx에서 쏜 syslog(UDP) 데이터를 50000 포트에서 받습니다.
+  syslog {
+    port => 50000   # Logstash 컨테이너 내부 50000번 포트 열고 대기
+    type => "nginx" # 들어오는 데이터에 "nginx"라는 이름표
+  }
+
+  tcp {
+      port => 5044  # Logstash 컨테이너 내부 5044번 포트 열고 대기
+      codec => json_lines   # 번역기(codec): 들어오는 데이터가 JSON 구조로 분석
+      type => "spring"
+  }
+
+   tcp {
+       port => 5045 # Logstash 컨테이너 내부 5045번 포트 열고 대기
+       codec => json_lines
+       type => "ai"
+   }
+}
+
+filter {
+  # (나중에 로그 포맷을 예쁘게 자르고 싶을 때 여기에 작성)
+}
+
+# [출구 설정] 데이터를 Elasticsearch 창고에 저장하는 곳
+output {
+  # 1. 터미널 화면에 로그가 잘 들어오는지 텍스트로 찍어줍니다. (디버깅용)
+  stdout {
+    codec => rubydebug
+  }
+
+  # 이름표(type)에 따라 엘라스틱서치의 다른 인덱스(엑셀 파일의 시트 같은 개념)로 분류해서 저장
+  if [type] == "nginx" {
+    elasticsearch {
+      hosts => ["http://elasticsearch:9200"]    # 창고 주소
+      index => "nginx-logs-%{+YYYY.MM.dd}"      # 'nginx-logs-오늘날짜' 라는 이름의 표에 저장
+    }
+  } else if [type] == "spring" {
+    elasticsearch {
+      hosts => ["http://elasticsearch:9200"]
+      index => "spring-logs-%{+YYYY.MM.dd}"
+    }
+  } else if [type] == "ai" {
+    elasticsearch {
+      hosts => ["http://elasticsearch:9200"]
+      index => "ai-logs-%{+YYYY.MM.dd}"
+    }
+  }
+}
+```
+
+<br>
+
+#### docker-compose 설정
+
+```yml
+  nginx:
+    image: nginx:latest
+    container_name: nginx_local
+    ports:
+      - "8000:80"   # 왼쪽(들어오는 요청 포트) : 오른쪽(도커 컨테이너 내부의 포트)
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf # 로컬'../nginx/nginx.conf' 파일을 -> 도커 안의 '/etc/nginx/nginx.conf'에 덮어씌움
+    depends_on:
+      - bangjwo
+      - bangjwo-ai
+      - logstash
+    networks:
+      - bangjwo-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch_local
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    networks:
+      - bangjwo-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.2
+    container_name: logstash_local
+    volumes:
+      - ../elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "50000:50000/udp" # Nginx 로그를 받을 UDP 포트
+      - "5044:5044"       # Spring
+      - "5045:5045"       # AI
+    depends_on:
+      - elasticsearch
+    networks:
+      - bangjwo-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: kibana_local
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - bangjwo-network
+```
+
+<br>
+
 ### 4-6. SSE(Server-Sent Events)를 활용한 실시간 알림 및 Nginx 버퍼링 이슈 해결
 
 ### 문제 상황
