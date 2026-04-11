@@ -11,3 +11,4 @@ uvicorn
 beautifulsoup4
 selenium
 webdriver-manager
+python-logstash

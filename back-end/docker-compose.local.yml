@@ -1,0 +1,228 @@
+# docker compose --env-file .env.local -f docker-compose.local.yml up -d
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    env_file:
+      - .env.local
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_DATABASE: bangjwo
+    ports:
+      - "13306:3306"
+    volumes:
+      - db-volume:/var/lib/mysql
+      - ./src/main/resources/init.sql:/docker-entrypoint-initdb.d/0-init.sql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/2-data.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bangjwo-network
+
+  mongo-db:
+    image: mongo:7.0
+    container_name: mongo-db
+    restart: always
+    env_file:
+      - .env.local
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-volume:/data
+    #      - /home/ubun2/mongodb/data:/data
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      bangjwo-network:
+        aliases:
+          - mongo
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    depends_on:
+      mongo-db:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "8082:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: "${ME_CONFIG_MONGODB_ADMINUSERNAME}"
+      ME_CONFIG_MONGODB_ADMINPASSWORD: "${ME_CONFIG_MONGODB_ADMINPASSWORD}"
+      ME_CONFIG_MONGODB_SERVER: mongo
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bangjwo-network
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "sh", "-c", "redis-cli ping | grep PONG" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bangjwo-network
+
+  bangjwo:
+    platform: linux/amd64
+    image: ${DOCKER_USERNAME}/bangjwo-backend:latest
+    container_name: bangjwo
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - .env.local
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      mongo-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/bangjwo?serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: bangjwo
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      RSA_PUBLIC_KEY: "${RSA_PUBLIC_KEY}"
+      RSA_PRIVATE_KEY: "${RSA_PRIVATE_KEY}"
+      AWS_ACCESS_KEY: "${AWS_ACCESS_KEY}"
+      AWS_SECRET_KEY: "${AWS_SECRET_KEY}"
+      AWS_REGION: "${AWS_REGION}"
+      KAKAO_REST_API_KEY: "${KAKAO_REST_API_KEY}"
+      PINATA_API_KEY: "${PINATA_API_KEY}"
+      PINATA_SECRET_KEY: "${PINATA_SECRET_KEY}"
+      PRIVATE_KEY: "${PRIVATE_KEY}"
+      INFURA_API_KEY: "${INFURA_API_KEY}"
+      CONTRACT_ADDRESS: "${CONTRACT_ADDRESS}"
+      ELASTIC_APM_ACTIVE: "false"
+    networks:
+      - bangjwo-network
+
+
+  bangjwo-ai:
+    build: ../bangjwo-ai
+    container_name: bangjwo-ai
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env.local
+    networks:
+      - bangjwo-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_local
+    ports:
+      - "8000:80"   # 왼쪽(들어오는 요청 포트) : 오른쪽(도커 컨테이너 내부의 포트)
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf # 로컬'../nginx/nginx.conf' 파일을 -> 도커 안의 '/etc/nginx/nginx.conf'에 덮어씌움
+    depends_on:
+      - bangjwo
+      - bangjwo-ai
+      - logstash
+    networks:
+      - bangjwo-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch_local
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    networks:
+      - bangjwo-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.2
+    container_name: logstash_local
+    volumes:
+      - ../elk/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "50000:50000/udp" # Nginx 로그를 받을 UDP 포트
+      - "5044:5044"       # Spring
+      - "5045:5045"       # AI
+    depends_on:
+      - elasticsearch
+    networks:
+      - bangjwo-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: kibana_local
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - bangjwo-network
+
+#  apm-server:
+#    image: docker.elastic.co/apm/apm-server:8.17.4
+#    container_name: apm-server
+#    env_file:
+#      - .env
+#    ports:
+#      - "8200:8200"
+#    networks:
+#      - bangjwo-network
+#      - elk
+#    extra_hosts:
+#      - "elasticsearch:192.168.192.2"
+#    environment:
+#      - APM_SERVER_OUTPUT_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#      - APM_SERVER_SETUP_KIBANA_HOST=http://kibana:5601
+#      - APM_SERVER_HOST=0.0.0.0:8200
+#      - ELASTIC_USERNAME=elastic
+#      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+#      - KIBANA_USERNAME=kibana_system
+#      - KIBANA_SYSTEM_PASSWORD=${KIBANA_PASSWORD}
+#    restart: unless-stopped
+
+
+volumes:
+  db-volume:
+  mongo-volume:
+
+networks:
+  bangjwo-network:
+    driver: bridge
+
+#  elk:
+#    external: true
+#    name: docker-elk_elk

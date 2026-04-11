@@ -18,10 +18,27 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 
+import logging
+import logstash
+
+# 로거(Logger) 세팅: 터미널과 Logstash 양쪽으로 로그를 보냅니다.
+logger = logging.getLogger('bangjwo-ai-logger')
+logger.setLevel(logging.INFO)
+
+# 터미널에도 찍히게 설정
+console_handler = logging.StreamHandler()
+logger.addHandler(console_handler)
+
+# Logstash(5045 포트)로 전송하는 핸들러 추가
+# 도커 컴포즈의 서비스 이름인 'logstash'를 host로 사용합니다.
+logstash_handler = logstash.TCPLogstashHandler('logstash', 5045, version=1)
+logger.addHandler(logstash_handler)
+
 # 환경 변수 세팅
 load_dotenv()
 openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
+    logger.error("OPENAI_API_KEY가 설정되지 않았습니다.")
     raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다.")
 
 stored_final_url = None
@@ -59,8 +76,8 @@ def crawl_and_update_vector_db(final_url: str):
         driver.switch_to.frame("lawService")
         time.sleep(1)
     except Exception as e:
-        print("iframe 전환 실패:", e)
-    
+        logger.info("iframe 전환 실패:", e)
+
     html = driver.page_source
     driver.quit()
     
@@ -106,7 +123,7 @@ def crawl_and_update_vector_db(final_url: str):
     )
     vectorstore.persist()
     
-    print("새 벡터 DB 업데이트 완료!")
+    logger.info("새 벡터 DB 업데이트 완료!")
     
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     qa_chain = RetrievalQA.from_chain_type(
@@ -131,19 +148,19 @@ def check_and_update_vector_db():
     if iframe and iframe.has_attr("src"):
         relative_src = iframe["src"].replace("&amp;", "&")
         new_final_url = base_url + relative_src
-        print("새 final_url 추출:", new_final_url)
+        logger.info("새 final_url 추출:", new_final_url)
     else:
-        print("iframe의 src를 찾지 못했습니다.")
+        logger.info("iframe의 src를 찾지 못했습니다.")
         new_final_url = None
 
     # 기존 법령 url과 비교
     if new_final_url != stored_final_url:
-        print("final_url이 변경되었습니다. 벡터 DB를 업데이트합니다.")
+        logger.info("final_url이 변경되었습니다. 벡터 DB를 업데이트합니다.")
         stored_final_url = new_final_url
         if stored_final_url:
             vectorstore = crawl_and_update_vector_db(stored_final_url)
     else:
-        print("final_url이 변경되지 않았습니다.")
+        logger.info("final_url이 변경되지 않았습니다.")
     return stored_final_url, vectorstore, retriever, qa_chain
 
 def add_special_conditions_to_vector_db():
@@ -174,7 +191,7 @@ def add_special_conditions_to_vector_db():
         ids=["special-conditions"],
     )
     vectorstore.persist()
-    print("특약사항 레퍼런스 문서를 벡터 DB에 추가했습니다.")
+    logger.info("특약사항 레퍼런스 문서를 벡터 DB에 추가했습니다.")
 
 # 초기 벡터 DB 설정
 response = requests.get(main_url, headers=headers)
@@ -183,10 +200,10 @@ iframe = soup.find("iframe", id="lawService")
 if iframe and iframe.has_attr("src"):
     relative_src = iframe["src"].replace("&amp;", "&")
     stored_final_url = base_url + relative_src
-    print("초기 final_url 추출 성공:", stored_final_url)
+    logger.info("초기 final_url 추출 성공:", stored_final_url)
     vectorstore = crawl_and_update_vector_db(stored_final_url)
 else:
-    print("초기 iframe의 src를 찾지 못했습니다.")
+    logger.info("초기 iframe의 src를 찾지 못했습니다.")
     stored_final_url = None
 
 app = FastAPI(root_path="/ai")
@@ -276,6 +293,7 @@ async def ask_question(question: Question):
             answer = result.get("result", "답변을 생성할 수 없습니다.")
     except Exception as e:
         error_message = f"qa_chain 호출 중 오류: {str(e)}"
+        logger.error(error_message, exc_info=True)
         raise HTTPException(status_code=500, detail=error_message)
     
     answer_current_time = datetime.now(timezone.utc).isoformat()
