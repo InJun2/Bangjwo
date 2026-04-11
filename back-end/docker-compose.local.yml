@@ -87,8 +87,9 @@ services:
       - bangjwo-network
 
   bangjwo:
-    platform: linux/amd64
-    image: ${DOCKER_USERNAME}/bangjwo-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: bangjwo
     restart: always
     logging:
@@ -222,6 +223,7 @@ volumes:
 networks:
   bangjwo-network:
     driver: bridge
+    name: bangjwo-network
 
 #  elk:
 #    external: true
