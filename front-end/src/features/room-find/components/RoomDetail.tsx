@@ -603,7 +603,7 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                     scrollMarginTop={48 + tabMenuHeight}
                   >
                     <p className="text-xl font-bold">
-                      {room.maintenanceCost * 10000}원
+                      {room.maintenanceCost}원
                     </p>
                     <RoomOptions
                       title="관리비 포함 항목"
