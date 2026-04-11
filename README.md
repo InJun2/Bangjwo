@@ -346,6 +346,10 @@ Hibernate:
 
 <br>
 
+![키바나](./images/kibana.png)
+
+<br>
+
 #### nginx.conf 파일
 ```nginx
 events {
