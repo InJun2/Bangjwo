@@ -636,4 +636,4 @@ output {
 
 ### 7. 계약서 조회
 
-![계약서조회](./img/contract-end.png)
+![계약서조회](./images/contract-end.png)
