@@ -78,15 +78,17 @@ public class KakaoWebClientService {
 				.onStatus(
 					HttpStatusCode::isError,
 					clientResponse -> clientResponse.bodyToMono(String.class)
-						.flatMap(errorBody ->
-							reactor.core.publisher.Mono.error(
+						.flatMap(errorBody -> {
+							log.error("카카오 API 상세 에러 응답: {}", errorBody);
+							return reactor.core.publisher.Mono.error(
 								new BusinessException(AuthErrorCode.KAKAO_USER_INFO_REQUEST_FAILED)
-							)
-						)
+							);
+						})
 				)
 				.bodyToMono(KakaoUserInfo.class)
 				.block();
 		} catch (Exception e) {
+			log.error("Kakao 유저 정보 파싱/통신 에러 상세: ", e);
 			throw new BusinessException(AuthErrorCode.KAKAO_USER_INFO_REQUEST_FAILED);
 		}
 	}
