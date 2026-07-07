@@ -63,6 +63,7 @@ public class NotificationService {
 
 		saveAndSend(receiverId, message, finalUrl);
 	}
+	
 	private void broadcast(Long receiverId, NotificationMessage message, String finalUrl) {
 		long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(receiverId);
 		String eventData = String.format("{\"message\":\"%s\", \"url\":\"%s\", \"unreadCount\":%d}",
