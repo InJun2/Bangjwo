@@ -76,9 +76,9 @@ aws:
   secret:
     key: ${AWS_SECRET_KEY}
   s3:
-    bucket: "bangjwo-service-s3"
-    base-url: https://bangjwo-service-s3.s3.ap-northeast-2.amazonaws.com/
-  region: "ap-northeast-2"
+    bucket: ${AWS_S3_BUCKET}
+    base-url: https://${AWS_S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/
+  region: ${AWS_REGION}
 
 imp:
   code: ${PORTONE_CUSTOMER}
