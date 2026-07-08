@@ -61,6 +61,6 @@ jobs:
             git pull origin main
             cd back-end
             sudo docker-compose pull
-            sudo docker rm -f mysql mongo-db mongo-express redis bangjwo bangjwo-ai || true
+            sudo docker rm -f $(sudo docker ps -aq) || true
             sudo docker-compose up -d --build
             sudo docker image prune -f
