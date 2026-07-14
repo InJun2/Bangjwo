@@ -51,26 +51,26 @@ def crawl_and_update_vector_db(final_url: str):
 
     options.binary_location = "/usr/bin/chromium"
     driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
-    
+
     driver.get(final_url)
     time.sleep(3)
-    
+
     try:
         driver.switch_to.frame("lawService")
         time.sleep(1)
     except Exception as e:
         print("iframe 전환 실패:", e)
-    
+
     html = driver.page_source
     driver.quit()
-    
+
     # 법령 본문 추출
     soup_final = BeautifulSoup(html, "html.parser")
     container = soup_final.find("div", class_="law_text")
     if container is None:
-        container = soup_final.body  
+        container = soup_final.body
     full_text = container.get_text(separator="\n", strip=True)
-    
+
     # 정규표현식으로 '제 X조' 단위로 분리
     pattern = r"(제\s*\d+\s*조)"
     splits = re.split(pattern, full_text)
@@ -83,17 +83,17 @@ def crawl_and_update_vector_db(final_url: str):
             articles.append(article_text)
     else:
         articles.append(full_text)
-    
+
     # 문서 데이터 생성
     documents = []
     for idx, article in enumerate(articles):
         doc = {"id": str(idx), "content": article}
         documents.append(doc)
-    
+
     texts = [doc["content"] for doc in documents]
     metadatas = [{"id": doc["id"]} for doc in documents]
     ids = [doc["id"] for doc in documents]
-    
+
     # OpenAI 임베딩 모델을 이용해 Chroma 벡터 DB 생성 및 저장
     embeddings = OpenAIEmbeddings(api_key=openai_api_key)
     vectorstore = Chroma.from_texts(
@@ -105,9 +105,9 @@ def crawl_and_update_vector_db(final_url: str):
         persist_directory="./law_db"
     )
     vectorstore.persist()
-    
+
     print("새 벡터 DB 업데이트 완료!")
-    
+
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
@@ -237,6 +237,14 @@ special_conditions_script = """
 async def ask_question(question: Question):
     user_question = question.question
     current_time = datetime.now(timezone.utc).isoformat()
+
+    if qa_chain is None:
+            return {
+                "data": [
+                    {"sender": "user", "message": user_question, "timestamp": current_time},
+                    {"sender": "chatbot", "message": "현재 법령 데이터를 불러오는 중이거나 실패했습니다. 잠시 후 다시 시도해주세요.", "timestamp": datetime.now(timezone.utc).isoformat()}
+                ]
+            }
 
     try:
         # 특약사항 관련 질문 분기 처리
