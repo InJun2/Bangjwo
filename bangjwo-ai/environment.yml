@@ -18,4 +18,5 @@ dependencies:
       - uvicorn
       - beautifulsoup4
       - selenium
+      - requests
       - webdriver-manager
