@@ -429,7 +429,6 @@ const RoomDetail = ({ selectedRoomId, onClose }: RoomDetailProps) => {
                         as="div"
                       >
                         집주인
-                        {room.memberId}
                       </Button>
                       <Button
                         size="small"

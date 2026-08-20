@@ -51,6 +51,11 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  servlet:
+    multipart:
+      max-file-size: 4MB
+      max-request-size: 25MB
+
 registration:
   kakao:
     client-id: ${KAKAO_REST_API_KEY}

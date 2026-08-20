@@ -43,7 +43,7 @@ public class CreateRoomRequestDto {
 	@NotNull
 	private String address;
 
-	@Schema(description = "상세 주소", example = "101동 202호", requiredMode = Schema.RequiredMode.REQUIRED)
+	@Schema(description = "상세 주소", example = "101동 202호", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
 	@NotNull
 	private String addressDetail;
 
@@ -62,7 +62,7 @@ public class CreateRoomRequestDto {
 	@Min(0)
 	private BigDecimal exclusiveArea;
 
-	@Schema(description = "공급면적", example = "400.50", requiredMode = Schema.RequiredMode.REQUIRED)
+	@Schema(description = "공급면적", example = "400.50", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
 	@NotNull
 	@Min(0)
 	private BigDecimal supplyArea;
@@ -75,12 +75,12 @@ public class CreateRoomRequestDto {
 	@NotBlank
 	private String floor;
 
-	@Schema(description = "최고 층수", example = "20", requiredMode = Schema.RequiredMode.REQUIRED, minimum = "0")
+	@Schema(description = "최고 층수", example = "20", requiredMode = Schema.RequiredMode.AUTO, minimum = "0")
 	@NotNull
 	@Min(0)
 	private Integer maxFloor;
 
-	@Schema(description = "주차 가능 대수", example = "100", requiredMode = Schema.RequiredMode.REQUIRED, minimum = "0")
+	@Schema(description = "주차 가능 대수", example = "100", requiredMode = Schema.RequiredMode.AUTO, minimum = "0")
 	@NotNull
 	@Min(0)
 	private Integer parkingSpaces;
